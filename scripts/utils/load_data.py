@@ -44,6 +44,7 @@ def one_hot_vector_encoding(label, num_class):
     return res
 
 def resize_images(list_images):
+    #TODO : better resizing
     new_list = []
     for image in list_images:
             new_list.append(image[:32,:32,:])
@@ -125,13 +126,13 @@ def load_wiki_paintings():
 
 def download_wikipaintings():
     dataPath = '../data/wiki_paintings/'
-    data = pd.read_csv(dataPath+'wiki_paintings.csv')
+    data = pd.read_csv('wiki_paintings.csv')
     for index, row in data.iterrows():
         style = row['style']
         if not os.path.exists(dataPath+style):
             os.makedirs(dataPath+style)
         download_image(dataPath+style+'/'+row['image_id'],row['image_url'])
-
+    return data
         
 
 def download_image(file_name,url):
