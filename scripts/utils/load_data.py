@@ -3,19 +3,25 @@ import os
 import pandas as pd
 from PIL import Image
 import requests
+from io import BytesIO
 import numpy as np
-import pickle
+import requests
+import h5py
+from scipy.misc import imresize
+import zipfile
+import sys
 
-#----------------------------COMMUN FUNCTIONS---------------------------
+#----------------------------GENERAL FUNCTIONS---------------------------
 
-def df_as_dataset_labels(df):
+def df_as_images_labels(df):
 
+    print('Cleaning data...')
     df = clean_data(df)
 
     dataset = df['image'].tolist()
     labels = df['label'].tolist()
 
-
+    print('Encoding data...')
     dataset = encode_dataset(dataset)
     labels,dic = encode_labels(labels)
 
@@ -47,7 +53,7 @@ def resize_images(list_images):
     #TODO : better resizing
     new_list = []
     for image in list_images:
-            new_list.append(image[:32,:32,:])
+            new_list.append(np.transpose(imresize(image,(256,256,3))))
     return new_list
 
 def clean_data(df):
@@ -61,9 +67,16 @@ def clean_data(df):
 
 #----------------------------PANDORA FUNCTIONS---------------------------
 
+def serialize_pandora():
+    df = load_df_pandora()
+    images, labels, dic = df_as_images_labels(df)
+    del df
+    print('Serializing data')
+    with h5py.File('../datasets/pandora.h5', 'w') as f:
+        f.create_dataset('images', data=images)
+        f.create_dataset('labels', data=labels)
 
-
-def load_pandora():
+def load_df_pandora():
     dataPath = '../../data/pandora/'
     styles = os.listdir(dataPath)
     dataset = []
@@ -103,70 +116,78 @@ def load_pandora():
     df['artist'] = artists
     return df
 
-
+def download_pandora():
+    dataPath = '../../data/pandora/'
+    print('Downloading data...')
+    request =requests.get("http://imag.pub.ro/pandora/Download/Pandora_V1.zip",stream=True)
+    print('Unziping data...')
+    zip_ref = zipfile.ZipFile(BytesIO(request.content))
+    zip_ref.extractall(dataPath)
+    zip_ref.close()
+    return
 
 
 #----------------------------WIKIPAINTINGS FUNCTIONS---------------------------
 
-def load_wiki_paintings():
-    dataPath = '../data/wiki_paintings'
-    styles = os.listdir(dataPath)
 
+def load_df_wikipaintings():
+    dataPath = '../../data/wikipaintings/'
+    styles = os.listdir(dataPath)
     dataset = []
     labels = []
+    image_names = []
     print('Loading data')
     for style in styles:
         print('Loading style ',style,'...')
-        size = load_style(dataPath+style,dataset)  
-        print(size," images found") 
-        labels.extend([style for i in range(size)])
-    return dataset,labels
-
-
+        style_content = os.listdir(dataPath+style)
+        for item in style_content:
+            path = dataPath+style+'/'+item
+            try:
+                dataset.append(img.imread(path))
+                labels.append(style)
+                image_names.append(item)
+            except OSError:
+                print('Couldn\'t load ' + item)
+    df = pd.DataFrame()
+    df['image_name'] = image_names
+    df['image'] = dataset
+    df['label'] = labels
+    return df
 
 def download_wikipaintings():
-    dataPath = '../data/wiki_paintings/'
+    dataPath = '../../data/wiki_paintings/'
     data = pd.read_csv('wiki_paintings.csv')
+    size = len(data)
+    n_downloaded = 0
+
     for index, row in data.iterrows():
         style = row['style']
         if not os.path.exists(dataPath+style):
             os.makedirs(dataPath+style)
-        download_image(dataPath+style+'/'+row['image_id'],row['image_url'])
+        _download_image(dataPath+style+'/'+row['image_id'],row['image_url'])
+        done = int(50 * n_downloaded / size)
+        sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50 - done)))
+        sys.stdout.flush()
+
+        n_downloaded +=1
     return data
         
 
-def download_image(file_name,url):
+def _download_image(file_name,url):
     try:
         img = Image.open(requests.get(url,stream=True).raw).convert('RGB')
         img.save(file_name+'jpeg','JPEG')
     except OSError:
         print('Erreur downloading image ',file_name)
 
-
-
-
-
-
-
+def serialize_wikipaintings():
+    df = load_df_wikipaintings()
+    images, labels, dic = df_as_images_labels(df)
+    del df
+    print('Serializing data')
+    with h5py.File('../datasets/wikipaintings.h5', 'w') as f:
+        f.create_dataset('images', data=images)
+        f.create_dataset('labels', data=labels)
 
 if __name__ == "__main__":
-    df = load_pandora()
-    dataset,labels,dic = df_as_dataset_labels(df)
-
-    with open('../dataset.pick','wb') as f:
-        pickle.dump(dataset,f)
-    with open('../labels.pick', 'wb') as f:
-        pickle.dump(labels, f)
-    with open('../dic.pick', 'wb') as f:
-        pickle.dump(dic, f)
-    #dataset,labels = get_pandora_dataset_labels()
-    #n = len(labels)
-    #randomize = np.arange(len(dataset))
-    #np.random.shuffle(randomize)
-    #dataset = dataset[randomize,:,:,:]
-    #labels = labels[randomize]
-
-    #dataset = dataset[:n//20]
-    #labels = labels[:n//20]
-    #pickle.dump(dataset,open('dataset.pck','wb'))
-    #pickle.dump(labels,open('labels.pck','wb'))
+    download_wikipaintings()
