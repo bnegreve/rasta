@@ -10,6 +10,7 @@ from scipy.misc import imresize
 import zipfile
 import sys
 
+
 #----------------------------GENERAL FUNCTIONS---------------------------
 
 def df_as_images_labels(df):
@@ -52,7 +53,7 @@ def resize_images(list_images):
     #TODO : better resizing
     new_list = []
     for image in list_images:
-            new_list.append(np.transpose(imresize(image,(256,256,3))))
+            new_list.append(np.transpose(imresize(image,(227,227,3))))
     return new_list
 
 def clean_data(df):
@@ -170,6 +171,14 @@ def download_pandora():
     zip_ref.extractall(dataPath)
     zip_ref.close()
     return
+
+def load_pandora():
+    print('Loading data...')
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    with h5py.File(file_path+'/../datasets/pandora.h5') as f:
+        x = f['images'][:]
+        y = f['labels'][:]
+    return x,y
 
 
 #----------------------------WIKIPAINTINGS FUNCTIONS---------------------------

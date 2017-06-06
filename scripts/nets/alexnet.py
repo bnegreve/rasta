@@ -1,60 +1,11 @@
 from keras.layers import Flatten, Dense, Dropout,Input,merge,Activation,Lambda
 from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
-from keras.models import Sequential,Model
+from keras.models import Model
 from keras import backend as K
-from keras.utils import plot_model
-import os,datetime
-import sys
-import pickle
-
-from sklearn.model_selection import train_test_split
-import pydot
-
-import h5py
+import os
 
 
-def my_get_model():
-  
-    model = Sequential()
-
-    #Layer 1
-    model.add(Conv2D(96, 11, 11, subsample=(4, 4),input_shape=(32,32,3), activation='relu',name='conv_1', init='he_normal'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
-    #Layer 2
-    model.add(Conv2D(256, (5, 5), activation='relu',  padding='same',name='conv_2_1'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
-    #Layer 3
-    model.add(ZeroPadding2D((1,1)))
-    model.add(Conv2D(512, (3, 3), activation='relu',  padding='same',name='conv_3'))
-
-    #Layer 4
-    model.add(ZeroPadding2D((1,1)))
-    model.add(Conv2D(384, (3, 3), activation='relu',  padding='same',name='conv_4_1'))
-
-    #Layer 5
-    model.add(ZeroPadding2D((1,1)))
-    model.add(Conv2D(256, (3, 3), activation='relu', padding='same',name='conv_5_1'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
-    #Layer 6
-    model.add(Flatten())
-    model.add(Dense(4096, activation='relu', init='glorot_normal',name='dense_1'))
-    model.add(Dropout(0.5))
-
-    #Layer 7
-    model.add(Dense(4096, activation='relu', init='glorot_normal',name='dense_2'))
-    model.add(Dropout(0.5))
-
-    #Layer 8
-    model.add(Dense(12, activation='softmax', init='glorot_normal',name='dense_3'))
-    
-
-
-    return model
-
-def splittensor(axis=1, ratio_split=1, id_split=0):
+def _splittensor(axis=1, ratio_split=1, id_split=0):
     def split_function(X):
         div = int(X.shape[axis] // ratio_split)
 
@@ -72,8 +23,27 @@ def splittensor(axis=1, ratio_split=1, id_split=0):
 
     return Lambda(split_function)
 
+def _crosschannelnormalization(alpha = 1e-4, k=2, beta=0.75, n=5,**kwargs):
+    """
+    This is the function used for cross channel normalization in the original
+    Alexnet
+    """
+    def f(X):
+        b, ch, r, c = X.shape
+        ch = int(ch)
+        half = n // 2
+        square = K.square(X)
+        extra_channels = K.spatial_2d_padding(K.permute_dimensions(square, (0,2,3,1)), ((0,0),(half,half)))
+        extra_channels = K.permute_dimensions(extra_channels, (0,3,1,2))
+        scale = k
+        for i in range(n):
+            scale += alpha * extra_channels[:,i:i+ch,:,:]
+        scale = scale ** beta
+        return X / scale
 
-def get_model(nb_classes=12,training_mode='full'):
+    return Lambda(f)
+
+def Alexnet(weights=None,nb_classes = 12,training_mode='full'):
     trainable_conv = False
     trainable_dense_1 = False
     trainable_dense_2 = False
@@ -90,30 +60,33 @@ def get_model(nb_classes=12,training_mode='full'):
         trainable_dense_1 = True
     elif training_mode=='full':
         trainable_dense_3 = True
+        trainable_dense_2 = True
+        trainable_dense_1 = True
+        trainable_conv = True
     else:
         print('Bad training_mode argument. Should be : [ full | partial_1 | partial_2 | partial_3 ]')
 
-    inputs = Input(shape=(3,256,256))
+    inputs = Input(shape=(3,227,227))
 
 
     conv_1 = Conv2D(96, (11, 11), strides=(4, 4), activation='relu',name='conv_1', kernel_initializer='he_normal',trainable=trainable_conv)(inputs)
 
     conv_2 = MaxPooling2D((3, 3), strides=(2, 2))(conv_1)
-    #conv_2 = crosschannelnormalization(name="convpool_1")(conv_2)
+    conv_2 = _crosschannelnormalization(name="convpool_1")(conv_2)
 
     conv_2 = ZeroPadding2D((2, 2))(conv_2)
-    conv_2 = merge([Conv2D(128, (5, 5), activation="relu", kernel_initializer='he_normal', name='conv_2_' + str(i + 1),trainable=trainable_conv)(splittensor(ratio_split=2, id_split=i)(conv_2)) for i in range(2)], mode='concat', concat_axis=1, name="conv_2")
+    conv_2 = merge([Conv2D(128, (5, 5), activation="relu", kernel_initializer='he_normal', name='conv_2_' + str(i + 1),trainable=trainable_conv)(_splittensor(ratio_split=2, id_split=i)(conv_2)) for i in range(2)], mode='concat', concat_axis=1, name="conv_2")
 
     conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
-    #conv_3 = crosschannelnormalization()(conv_3)
+    conv_3 = _crosschannelnormalization()(conv_3)
     conv_3 = ZeroPadding2D((1, 1))(conv_3)
     conv_3 = Conv2D(384, 3, 3, activation='relu', name='conv_3', init='he_normal',trainable=trainable_conv)(conv_3)
 
-    conv_4 = ZeroPadding2D((1, 1))(conv_3)
-    conv_4 = merge([Conv2D(192, 3, 3, activation="relu", init='he_normal', name='conv_4_' + str(i + 1),trainable=trainable_conv)(splittensor(ratio_split=2, id_split=i)(conv_4)) for i in range(2)], mode='concat', concat_axis=1, name="conv_4")
+    conv_3 = ZeroPadding2D((1, 1))(conv_3)
+    conv_4 = merge([Conv2D(192, 3, 3, activation="relu", init='he_normal', name='conv_4_' + str(i + 1),trainable=trainable_conv)(_splittensor(ratio_split=2, id_split=i)(conv_3)) for i in range(2)], mode='concat', concat_axis=1, name="conv_4")
 
-    conv_5 = ZeroPadding2D((1, 1))(conv_4)
-    conv_5 = merge([Conv2D(128, 3, 3, activation="relu", init='he_normal', name='conv_5_' + str(i + 1),trainable=trainable_conv)(splittensor(ratio_split=2, id_split=i)(conv_5)) for i in range(2)], mode='concat', concat_axis=1, name="conv_5")
+    conv_4 = ZeroPadding2D((1, 1))(conv_4)
+    conv_5 = merge([Conv2D(128, 3, 3, activation="relu", init='he_normal', name='conv_5_' + str(i + 1),trainable=trainable_conv)(_splittensor(ratio_split=2, id_split=i)(conv_4)) for i in range(2)], mode='concat', concat_axis=1, name="conv_5")
 
     dense_1 = MaxPooling2D((3, 3), strides=(2, 2), name="convpool_5")(conv_5)
 
@@ -130,76 +103,11 @@ def get_model(nb_classes=12,training_mode='full'):
 
     alexnet.compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=['accuracy'])
 
+    if weights!=None:
+        alexnet.load_weights(weights, by_name=True)
+
     return alexnet
 
-def crosschannelnormalization(alpha = 1e-4, k=2, beta=0.75, n=5,**kwargs):
-    """
-    This is the function used for cross channel normalization in the original
-    Alexnet
-    """
-    def f(X):
-        b, ch, r, c = X.shape
-        ch = int(ch)
-        half = n // 2
-        square = K.square(X)
-        extra_channels = K.spatial_2d_padding(K.permute_dimensions(square, (0,2,3,1)), ((0,half),(0,half)))
-        extra_channels = K.permute_dimensions(extra_channels, (0,3,1,2))
-        scale = k
-        for i in range(n):
-            scale += alpha * extra_channels[:,i:i+ch,:,:]
-        scale = scale ** beta
-        return X / scale
-
-    return Lambda(f)
-
-
-def load_pandora():
-    print('Loading data...')
-    with h5py.File('../datasets/pandora.h5') as f:
-        x = f['images'][:]
-        y = f['labels'][:]
-    return x,y
-
-
-def set_imageNet_weights(model):
-    model.load_weights('weights/alexnet_weights.h5', by_name=True)
-    return model
-
-def train_model(X_train,y_train,model,saving=True):
-    history = model.fit(X_train, y_train, batch_size=32, epochs=10, validation_split=0.2)
-    print(type(history.history))
-    if saving:
-        now = datetime.datetime.now()
-        model_name = 'alexnet_'+str(now.year)+'_'+str(now.month)+'_'+str(now.day)+':'+str(now.hour)+str(now.minute)+str(now.second)
-        os.makedirs('../savings/'+model_name)
-        model_to_image(model,'model','../savings/'+model_name+'/')
-        with open('../savings/'+model_name+'/'+'summary.txt','w') as f:
-            orig_stdout = sys.stdout
-            sys.stdout = f
-            print(model.summary())
-            sys.stdout = orig_stdout
-            f.close()
-        with open('../savings/'+model_name+'/'+'history.pck','wb') as f:
-            pickle.dump(history.history,f)
-            f.close()
-        with open('../savings/'+model_name+'/'+'model.json','w') as f:
-            f.write(model.to_json())
-        model.save_weights('../savings/'+model_name+'/'+'my_model_weights.h5')
-
-    return model
-
-def model_to_image(model,name,folderpath):
-    pydot.find_graphviz = lambda: True
-    plot_model(model, to_file=folderpath+name)
 
 if __name__ == '__main__':
-    x,y = load_pandora()
-
-    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size = 0.1)
-
-    model1 = get_model()
-    model1 = set_imageNet_weights(model1)
-    train_model(X_train[:80],y_train[:80],model1)
-    #score = model.evaluate(X_test, y_test, batch_size=32)
-
-    #print('The test score is : ',score)
+    pass
