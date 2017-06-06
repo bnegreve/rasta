@@ -1,7 +1,18 @@
 
+env/
+
+notebooks/
 
 data/
 
 scripts/\.idea/
 
 scripts/utils/__pycache__/
+
+scripts/nets/__pycache__/
+
+*.jpg
+
+*.png
+
+/scripts/savings/
