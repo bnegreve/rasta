@@ -2,7 +2,6 @@ import matplotlib.image as img
 import os
 import pandas as pd
 from PIL import Image
-import requests
 from io import BytesIO
 import numpy as np
 import requests
@@ -67,6 +66,50 @@ def clean_data(df):
 
 #----------------------------PANDORA FUNCTIONS---------------------------
 
+def serialize_pandora2():
+    dataPath = '../../data/pandora/'
+    styles = os.listdir(dataPath)
+    dataset = []
+    labels = []
+    artists = []
+    image_names = []
+    print('Loading data')
+    for style in styles:
+        print('Loading style ', style, '...')
+        style_content = os.listdir(dataPath + style)
+        for item in style_content:
+            path = dataPath + style + '/' + item
+            if os.path.isfile(path):
+                try:
+                    dataset.append(img.imread(path))
+                    artists.append('unknown')
+                    labels.append(style)
+                    image_names.append(item)
+                except OSError:
+                    print('Couldn\'t load ' + item)
+
+            if os.path.isdir(path):
+                artist_content = os.listdir(path)
+                for file in artist_content:
+                    try:
+                        dataset.append(img.imread(path + '/' + file))
+                        artists.append(item)
+                        labels.append(style)
+                        image_names.append(file)
+                    except OSError:
+                        print('Couldn\'t load ' + file)
+        df = pd.DataFrame()
+        df['image_name'] = image_names
+        df['image'] = dataset
+        df['label'] = labels
+        df['artist'] = artists
+        images, labels, dic = df_as_images_labels(df)
+        del df
+        with h5py.File('../datasets/pandora.h5', 'a') as f:
+            f.create_dataset('images', data=images)
+            f.create_dataset('labels', data=labels)
+
+
 def serialize_pandora():
     df = load_df_pandora()
     images, labels, dic = df_as_images_labels(df)
@@ -75,6 +118,8 @@ def serialize_pandora():
     with h5py.File('../datasets/pandora.h5', 'w') as f:
         f.create_dataset('images', data=images)
         f.create_dataset('labels', data=labels)
+
+
 
 def load_df_pandora():
     dataPath = '../../data/pandora/'
@@ -119,7 +164,7 @@ def load_df_pandora():
 def download_pandora():
     dataPath = '../../data/pandora/'
     print('Downloading data...')
-    request =requests.get("http://imag.pub.ro/pandora/Download/Pandora_V1.zip",stream=True)
+    request = requests.get("http://imag.pub.ro/pandora/Download/Pandora_V1.zip",stream=True)
     print('Unziping data...')
     zip_ref = zipfile.ZipFile(BytesIO(request.content))
     zip_ref.extractall(dataPath)
@@ -157,7 +202,10 @@ def load_df_wikipaintings():
 def download_wikipaintings():
     dataPath = '../../data/wiki_paintings/'
     data = pd.read_csv('wiki_paintings.csv')
+    main_styles = ['Art Informel', 'Magic Realism', 'Abstract Art', 'Pop Art', 'Ukiyo-e', 'Mannerism (Late Renaissance)', 'Color Field Painting', 'Minimalism', 'High Renaissance', 'Early Renaissance', 'Cubism', 'Rococo', 'Abstract Expressionism', 'Naïve Art (Primitivism)', 'Northern Renaissance', 'Neoclassicism', 'Baroque', 'Symbolism', 'Art Nouveau (Modern)', 'Surrealism', 'Expressionism', 'Post-Impressionism', 'Romanticism', 'Realism', 'Impressionism']
+    data = data[data['style'].isin(main_styles)]
     size = len(data)
+    print(size)
     n_downloaded = 0
 
     for index, row in data.iterrows():
