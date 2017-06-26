@@ -11,8 +11,6 @@ scripts/utils/__pycache__/
 
 scripts/nets/__pycache__/
 
-*.jpg
+savings/
 
-*.png
-
-/scripts/savings/
+*.pyc
