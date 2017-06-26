@@ -1,8 +1,9 @@
 from keras.layers import Flatten, Dense, Dropout,Input,merge,Activation,Lambda
 from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
+from keras.layers.merge import Concatenate
 from keras.models import Model
 from keras import backend as K
-import os
+import os,sys
 
 
 def _splittensor(axis=1, ratio_split=1, id_split=0):
@@ -101,13 +102,61 @@ def Alexnet(weights=None,nb_classes = 12,training_mode='full'):
 
     alexnet = Model(input=inputs, output=prediction)
 
-    alexnet.compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=['accuracy'])
-
     if weights!=None:
         alexnet.load_weights(weights, by_name=True)
-
+    
     return alexnet
 
 
+def decaf(weights=None,rank=6):
+    inputs = Input(shape=(3,227,227))
+
+    conv_1 = Conv2D(96, (11, 11), strides=(4, 4), activation='relu',name='conv_1', kernel_initializer='he_normal',trainable=False)(inputs)
+
+    conv_2 = MaxPooling2D((3, 3), strides=(2, 2))(conv_1)
+    conv_2 = _crosschannelnormalization(name="convpool_1")(conv_2)
+
+    conv_2 = ZeroPadding2D((2, 2))(conv_2)
+    conv_2 = Concatenate(axis=1,name='conv_2')([Conv2D(128, (5, 5), activation="relu", kernel_initializer='he_normal', name='conv_2_' + str(i + 1),trainable=False)(_splittensor(ratio_split=2, id_split=i)(conv_2)) for i in range(2)])
+
+    conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
+    conv_3 = _crosschannelnormalization()(conv_3)
+    conv_3 = ZeroPadding2D((1, 1))(conv_3)
+    conv_3 = Conv2D(384, (3, 3), activation='relu', name='conv_3', kernel_initializer='he_normal',trainable=False)(conv_3)
+
+    conv_3 = ZeroPadding2D((1, 1))(conv_3)
+    conv_4 = Concatenate(axis=1,name='conv_4')([Conv2D(192, (3, 3), activation="relu", kernel_initializer='he_normal', name='conv_4_' + str(i + 1),trainable=False)(_splittensor(ratio_split=2, id_split=i)(conv_3)) for i in range(2)])
+
+    conv_4 = ZeroPadding2D((1, 1))(conv_4)
+    conv_5 = Concatenate(axis=1,name='conv_5')([Conv2D(128, (3, 3), activation="relu", kernel_initializer='he_normal', name='conv_5_' + str(i + 1),trainable=False)(_splittensor(ratio_split=2, id_split=i)(conv_4)) for i in range(2)])
+
+    dense_1 = MaxPooling2D((3, 3), strides=(2, 2), name="convpool_5")(conv_5)
+    dense_1 = Flatten(name="flatten")(dense_1)
+
+    
+    if rank!=5 :
+        dense_1 = Dense(4096, kernel_initializer='he_normal',trainable=False)(dense_1)
+        if rank == 7 :
+            dense_1 =  Dense(4096, kernel_initializer='he_normal',trainable=False)(dense_1)
+            
+    last = dense_1
+    prediction = Activation("relu", name="relu")(last)
+
+    alexnet = Model(input=inputs, output=prediction)
+    if weights!=None:
+        alexnet.load_weights(weights, by_name=True)
+    
+    return alexnet    
+
+
+
+
 if __name__ == '__main__':
-    pass
+    K.set_image_data_format('channels_first')
+    model = decaf6()
+    with open('./summary.txt', 'w') as f:
+        orig_stdout = sys.stdout
+        sys.stdout = f
+        print(model.summary())
+        sys.stdout = orig_stdout
+        f.close()

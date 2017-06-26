@@ -1,0 +1,10 @@
+Keras
+numpy
+Pillow
+protobuf
+pydot
+PyYAML
+scipy
+six
+Theano
+
