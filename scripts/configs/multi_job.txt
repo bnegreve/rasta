@@ -1,0 +1,8 @@
+decaf6 128 300 500 55 False
+decaf6 128 300 500 55 True
+decaf6 256 300 250 27 False
+decaf6 256 300 250 27 True
+decaf5 128 300 500 55 False
+decaf5 128 300 500 55 True
+decaf5 256 300 250 27 False
+decaf5 256 300 250 27 True

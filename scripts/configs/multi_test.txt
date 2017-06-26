@@ -1,0 +1,3 @@
+decaf6 1 10 8 1 True
+decaf6 2 9 9 2 False
+decaf6 3 8 10 3 True
