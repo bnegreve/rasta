@@ -14,3 +14,13 @@ scripts/nets/__pycache__/
 savings/
 
 *.pyc
+
+*.save
+
+*.gz
+
+*.pdf
+
+*.log
+
+*.aux
