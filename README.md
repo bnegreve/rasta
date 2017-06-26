@@ -4,20 +4,6 @@
 The report is available at :  https://www.overleaf.com/9772511nsjrzzccdcqv
 
 ---
-
-## Virtual Environment
-
-Verify if virtualenv is not installed, please run : `pip3 install --user virtualenv`
-
-Create a virtual environment : `virtualenv -p /usr/bin/python3.5 env`
-
-Work on the virtual environment : `source env/bin/activate`
-
-Installing the required python modules : `pip3 install -r requirements.txt`
-
-Quit the virtual environment, run : `deactivate`
-
----
 ## Project
 
 First of all, datasets should be downloaded by running : `???`
