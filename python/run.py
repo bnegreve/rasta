@@ -24,15 +24,20 @@ val_steps = int(vals[5])
 flip = (vals[6]=='True')
 
 
+
+    
+
+
 K.set_image_data_format('channels_first')
 size = (227,227)
-TRAINING_PATH = '/home/alecoutre/rasta/data/wikipaintings_train'
-VAL_PATH = '/home/alecoutre/rasta/data/wikipaintings_val'
+TRAINING_PATH = join(PATH, '../data/wikipaintings_train')
+VAL_PATH = join(PATH, '../data/wikipaintings_val')
 WEIGHTS_PATH = join(PATH,'models/weights/alexnet_weights.h5')
 
-
-
-
+if len(vals) > 8:
+    TRAINING_PATH = vals[7]
+    VAL_PATH = vals[8]
+    
 if id=='decaf5':
     base_model = decaf(WEIGHTS_PATH,5)
     predictions = Dense(25, activation='softmax')(base_model.output)

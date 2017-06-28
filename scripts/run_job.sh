@@ -11,5 +11,5 @@ export LD_LIBRARY_PATH=/usr/local/cuda/lib64:/home/alecoutre/cuda/lib64
 
 while read a b c d e f
 do
-    python3 ../run.py $a $b $c $d $e $f
+    python3 ../python/run.py $a $b $c $d $e $f
 done < $file
