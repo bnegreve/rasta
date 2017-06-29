@@ -24,3 +24,5 @@ savings/
 *.log
 
 *.aux
+
+python/\.idea/
