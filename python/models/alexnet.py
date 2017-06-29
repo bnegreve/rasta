@@ -6,43 +6,7 @@ from keras import backend as K
 import os,sys
 
 
-def _splittensor(axis=1, ratio_split=1, id_split=0):
-    def split_function(X):
-        div = int(X.shape[axis] // ratio_split)
 
-        if axis == 0:
-            output =  X[id_split*div:(id_split+1)*div,:,:,:]
-        elif axis == 1:
-            output =  X[:, id_split*div:(id_split+1)*div, :, :]
-        elif axis == 2:
-            output = X[:,:,id_split*div:(id_split+1)*div,:]
-        elif axis == 3:
-            output = X[:,:,:,id_split*div:(id_split+1)*div]
-        else:
-            raise ValueError("This axis is not possible")
-        return output
-
-    return Lambda(split_function)
-
-def _crosschannelnormalization(alpha = 1e-4, k=2, beta=0.75, n=5,**kwargs):
-    """
-    This is the function used for cross channel normalization in the original
-    Alexnet
-    """
-    def f(X):
-        b, ch, r, c = X.shape
-        ch = int(ch)
-        half = n // 2
-        square = K.square(X)
-        extra_channels = K.spatial_2d_padding(K.permute_dimensions(square, (0,2,3,1)), ((0,0),(half,half)))
-        extra_channels = K.permute_dimensions(extra_channels, (0,3,1,2))
-        scale = k
-        for i in range(n):
-            scale += alpha * extra_channels[:,i:i+ch,:,:]
-        scale = scale ** beta
-        return X / scale
-
-    return Lambda(f)
 
 def Alexnet(weights=None,nb_classes = 12,training_mode='full'):
     trainable_conv = False
@@ -149,7 +113,43 @@ def decaf(weights=None,rank=6):
     return alexnet    
 
 
+def _splittensor(axis=1, ratio_split=1, id_split=0):
+    def split_function(X):
+        div = int(X.shape[axis] // ratio_split)
 
+        if axis == 0:
+            output =  X[id_split*div:(id_split+1)*div,:,:,:]
+        elif axis == 1:
+            output =  X[:, id_split*div:(id_split+1)*div, :, :]
+        elif axis == 2:
+            output = X[:,:,id_split*div:(id_split+1)*div,:]
+        elif axis == 3:
+            output = X[:,:,:,id_split*div:(id_split+1)*div]
+        else:
+            raise ValueError("This axis is not possible")
+        return output
+
+    return Lambda(split_function)
+
+def _crosschannelnormalization(alpha = 1e-4, k=2, beta=0.75, n=5,**kwargs):
+    """
+    This is the function used for cross channel normalization in the original
+    Alexnet
+    """
+    def f(X):
+        b, ch, r, c = X.shape
+        ch = int(ch)
+        half = n // 2
+        square = K.square(X)
+        extra_channels = K.spatial_2d_padding(K.permute_dimensions(square, (0,2,3,1)), ((0,0),(half,half)))
+        extra_channels = K.permute_dimensions(extra_channels, (0,3,1,2))
+        scale = k
+        for i in range(n):
+            scale += alpha * extra_channels[:,i:i+ch,:,:]
+        scale = scale ** beta
+        return X / scale
+
+    return Lambda(f)
 
 if __name__ == '__main__':
     K.set_image_data_format('channels_first')
