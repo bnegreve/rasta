@@ -3,7 +3,9 @@ env/
 
 notebooks/
 
-data/
+data/wikipaintings
+
+data/pandora
 
 scripts/\.idea/
 
