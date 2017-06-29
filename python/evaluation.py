@@ -179,5 +179,5 @@ def get_per_class_accuracy(labels,preds):
         accs.append(s / n * 100, )
 
 if __name__ == '__main__':
-    #main()
-    print(get_top_mutli_acc('../savings/resnet_2017_6_21-11:57:20/best_model.h5','../data/wikipaintings_10/wikipaintings_test',k_list=[1,3,5]))
+    main()
+
