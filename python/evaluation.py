@@ -10,7 +10,7 @@ import os
 from os.path import join
 import argparse
 from progressbar import ProgressBar
-from sklearn.metrics import accuracy_score,confusion_matrix
+from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 
 
@@ -46,7 +46,7 @@ def main():
         if eval_type == 'acc':
             print('\nAccuracy : {}%'.format(get_test_accuracy(model_path, data_path, isdecaf, top_k=k) * 100))
         elif eval_type == 'pred':
-            print("Top-{} prediction : {}".format(k, get_pred(model_path, data_path, isdecaf, top_k=k)))
+            print("Top-{} prediction : {}".format(k, get_pred(model_path, data_path, is_decaf6=isdecaf, top_k=k)))
         else:
             print('Error in arguments. Please try with -h')
 
@@ -74,6 +74,7 @@ def get_test_accuracy(model_path, test_data_path, is_decaf6=False,top_k=1):
 def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
 
     if is_decaf6:
+        K.set_image_data_format('channels_first')
         base_model = decaf()
         predictions = Dense(25, activation='softmax')(base_model.output)
         model = Model(inputs=base_model.input, outputs=predictions)
@@ -104,6 +105,8 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
             img_np = np.divide(img_np, 255)
             x = img_np[..., np.newaxis]
             x = x.transpose(3, 0, 1,2)
+            if is_decaf6:
+                x = x.transpose(0,3,2,1)
             pred = model.predict(x)
             args_sorted = np.argsort(pred)[0][::-1]
             y.append(label)
@@ -115,6 +118,7 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
 
 def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
     if is_decaf6:
+        K.set_image_data_format('channels_first')
         base_model = decaf()
         predictions = Dense(25, activation='softmax')(base_model.output)
         model = Model(inputs=base_model.input, outputs=predictions)
@@ -129,6 +133,8 @@ def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
     img_np = np.divide(img_np, 255)
     x = img_np[..., np.newaxis]
     x = x.transpose(3,0, 1,2)
+    if is_decaf6:
+       x = x.transpose(0, 3, 2, 1)
     pred = model.predict(x)
     dico = get_dico()
     inv_dico = {v: k for k, v in dico.items()}
