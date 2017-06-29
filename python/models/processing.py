@@ -1,21 +1,29 @@
 from keras.utils import plot_model
+from keras.models import load_model
 import os,datetime
 from os.path import join
 import sys
 import pickle
 import pydot
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import TensorBoard,EarlyStopping
+from keras.callbacks import TensorBoard,EarlyStopping,ModelCheckpoint
 
 
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
 
-def train_model_from_directory(directory_path,model,model_name ='model',saving=True,target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=1000,validation_path=None,validation_steps=110):
+def train_model_from_directory(directory_path,model,model_name ='model',saving=True,target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None):
     now = datetime.datetime.now()
     model_name = model_name+'_' + str(now.year) + '_' + str(now.month) + '_' + str(now.day) + '-' + str(now.hour) +':'+ str(now.minute) +':'+ str(now.second)
     MODEL_DIR = join(SAVINGS_DIR, model_name)
     os.makedirs(MODEL_DIR)
+
+    n_files = count_files(directory_path)
+    n_val_files = count_files(validation_path)
+    if steps_per_epoch==None:
+        steps_per_epoch = n_files//batch_size
+    if validation_steps==None:
+        validation_steps = n_val_files//batch_size
     
     if saving:
         params={"batch size":batch_size ,"horizontal flip":horizontal_flip,"epochs":epochs,"steps per epoch":steps_per_epoch,"validation steps":validation_steps}
@@ -26,14 +34,31 @@ def train_model_from_directory(directory_path,model,model_name ='model',saving=T
     train_generator = train_datagen.flow_from_directory(directory_path, target_size = target_size, batch_size = batch_size, class_mode='categorical')
     tbCallBack = TensorBoard(log_dir=MODEL_DIR, histogram_freq=0, write_graph=True, write_images=True)       
     if validation_path!=None:
-        #earlyStopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=0, verbose=0, mode='auto')
+        checkpoint = ModelCheckpoint(join(MODEL_DIR,'model.h5'), monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+        validation_generator = test_datagen.flow_from_directory(validation_path,target_size=target_size,batch_size=batch_size,class_mode='categorical')
+        history  = model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs = epochs,callbacks = [tbCallBack,checkpoint],validation_data=validation_generator,validation_steps=validation_steps)
+    else:
+        history  = model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs = epochs,callbacks = [tbCallBack])
+
+    if saving:
+        _postsaving(model,history,MODEL_DIR)
+    return model
+
+def continue_training(model_path,directory_path,saving=True,target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=1000,validation_path=None,validation_steps=110):
+    model = load_model(join(model_path,'best_model.h5'))    
+
+    train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = False)
+    test_datagen = ImageDataGenerator(rescale=1./255)
+    train_generator = train_datagen.flow_from_directory(directory_path, target_size = target_size, batch_size = batch_size, class_mode='categorical')
+    tbCallBack = TensorBoard(log_dir=model_path, histogram_freq=0, write_graph=True, write_images=True)       
+    if validation_path!=None:
         validation_generator = test_datagen.flow_from_directory(validation_path,target_size=target_size,batch_size=batch_size,class_mode='categorical')
         history  = model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs = epochs,callbacks = [tbCallBack],validation_data=validation_generator,validation_steps=validation_steps)
     else:
         history  = model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs = epochs,callbacks = [tbCallBack])
 
     if saving:
-        _postsaving(model,history,MODEL_DIR)
+        _postsaving(model,history,model_path)
     return model
 
 def _presaving(model,model_dir,params):
@@ -54,3 +79,9 @@ def _postsaving(model,history,model_dir):
     with open(join(model_dir,'history.pck'), 'wb') as f:
         pickle.dump(history.history, f)
         f.close()
+
+def count_files(folder):
+    s = 0
+    for t in list(os.walk(folder)):
+        s += len(t[2])
+    return s
