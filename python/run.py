@@ -16,10 +16,10 @@ parser = argparse.ArgumentParser(description='Description')
 
 parser.add_argument('-m', action="store", default='decaf6',dest='model_name',help='Name of the model [decaf|decaf6|decaf7|resnet|resnetfull|resnetfullempty]')
 parser.add_argument('-b', action="store", default=32, type=int,dest='batch_size',help='Size of the batch.')
-parser.add_argument('-e', action="store",default=100,type=int,dest='epochs',help='Number of epochs')
+parser.add_argument('-e', action="store",default=10,type=int,dest='epochs',help='Number of epochs')
 parser.add_argument('-f', action="store", default=False, type=bool,dest='horizontal_flip',help='Set horizontal flip or not [True|False]')
-parser.add_argument('--train_path', action="store", default=join(PATH, '../data/wikipaintings_train'),dest='training_path',help='Path of the training data directory')
-parser.add_argument('--val_path', action="store", default=join(PATH, '../data/wikipaintings_val'),dest='validation_path',help='Path of the validation data directory')
+parser.add_argument('--train_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_train'),dest='training_path',help='Path of the training data directory')
+parser.add_argument('--val_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_val'),dest='validation_path',help='Path of the validation data directory')
 
 
 args = parser.parse_args()

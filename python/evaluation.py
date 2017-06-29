@@ -22,7 +22,7 @@ def main():
                         help='if the model is a decaf6 type')
     parser.add_argument('-k', action="store", default=1, type=int, dest='k', help='top-k number')
     parser.add_argument('--data_path', action="store",
-                        default=join(PATH, '../data/wikipainting_10/wikipainting_10_test'), dest='data_path',
+                        default=join(PATH, '../data/wikipaintings_10/wikipaintings_test'), dest='data_path',
                         help='Path of the data (image or train folder)')
     parser.add_argument('--model_path', action="store", default=None, dest='model_path',
                         help='Path of the h5 model file')
@@ -49,7 +49,8 @@ def main():
 
 def get_dico():
     classes = []
-    directory = '../data/wikipaintings_train'
+    PATH = os.path.dirname(__file__)
+    directory = join(PATH,'../data/wikipaintings/wikipaintings_train')
     for subdir in sorted(os.listdir(directory)):
         if os.path.isdir(os.path.join(directory, subdir)):
             classes.append(subdir)

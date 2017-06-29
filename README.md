@@ -14,19 +14,47 @@ For the moment, it runs a training on AlexNet with 1 epochs and 1 step per epoch
 
 ## Train on a simple example dataset
 
-install all python requirements (see python/requirements.txt)
+### install all python requirements (see python/requirements.txt)
 
-    cat python/requirements.txt | xargs pip3 install
+   `pip3 install -r python/requirements.txt`
 
-to train decaf6 on wikipaintings_10 run: 
+### to train decaf6 on wikipaintings_10 run: 
 
-    python3 python/run.py decaf6 2 3 4 5 False data/wikipainting_10/wikipainting_10_train/ data/wikipainting_10/wikipainting_10_val/
+    `python3 python/run.py`
+    
+Run `python3 python/run.py -h` to see parameters
+    
+Default parameters are :
+  * model_name = decaf6
+  * batch_size = 32
+  * epochs = 10
+  * Horizontal_flip = False
+  * train_path = data/wikipaintings_10/wikipaintings_train
+  * val_path = data/wikipaintings_10/wikipaintings_val
 
-where:
 
-    decaf6 is the type of the network (see python/run.py for more details)
-    2 is the batch size
-    3 is the number of epochs
-    4 is the number of steps per epoch
-    5 is the number of steps per validation epoch
+## Evaluate a model
+
+Once the model is trained, you can evaluate the model by running
+    `python3 	python/evaluation.py --model_path=YOUR_MODEL_PATH`
+
+The YOUR_MODEL_PATH references to the path of your .h5 saved model (see savings folder).
+
+There is 2 types of evaluations :
+  * Accuracy evaluation : The top-k accuracy of the model is calculated given a specified training folder
+  * Prediction : The top-k prediction is calculated given a specified image
+
+Run `python3 python/evaluation.py -h` to see parameters.
+
+Default parameters are :
+  * type = acc
+  * k = 1
+  * --isdecaf = False
+  * --data_path = data/wikipainting_10/wikipainting_10_test
+  * --model_path = None
+
+--data_path argument can reference the test folder or the image file, depending on the type of evaluation.
+--isdecaf is necessary for the moment, because the evaluation for a decaf model is not exactly the same, due to a bug that will be fixed in the near future.
+
+
 
