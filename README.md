@@ -18,7 +18,7 @@ The report is available at :  https://www.overleaf.com/9772511nsjrzzccdcqv
 Run `python3 python/run.py -h` to see parameters
     
 Default parameters are :
-  * model_name = decaf6
+  * model_name = resnet
   * batch_size = 32
   * epochs = 10
   * Horizontal_flip = False

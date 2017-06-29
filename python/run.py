@@ -15,7 +15,7 @@ PATH = os.path.dirname(__file__)
 
 parser = argparse.ArgumentParser(description='Description')
 
-parser.add_argument('-m', action="store", default='decaf6',dest='model_name',help='Name of the model [decaf|decaf6|decaf7|resnet|resnetfull|resnetfullempty]')
+parser.add_argument('-m', action="store", default='resnet',dest='model_name',help='Name of the model [decaf|decaf6|decaf7|resnet|resnetfull|resnetfullempty]')
 parser.add_argument('-b', action="store", default=32, type=int,dest='batch_size',help='Size of the batch.')
 parser.add_argument('-e', action="store",default=10,type=int,dest='epochs',help='Number of epochs')
 parser.add_argument('-f', action="store", default=False, type=bool,dest='horizontal_flip',help='Set horizontal flip or not [True|False]')
