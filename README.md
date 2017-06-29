@@ -29,7 +29,7 @@ Default parameters are :
 ## Evaluate a model
 
 Once the model is trained, you can evaluate the model by running
-    `python3 	python/evaluation.py --model_path=YOUR_MODEL_PATH`
+    `python3 python/evaluation.py --model_path=YOUR_MODEL_PATH`
 
 The YOUR_MODEL_PATH references to the path of your .h5 saved model (see savings folder).
 
@@ -42,11 +42,12 @@ Run `python3 python/evaluation.py -h` to see parameters.
 Default parameters are :
   * type = acc
   * k = 1
-  * --isdecaf = False
-  * --data_path = data/wikipainting_10/wikipainting_10_test
-  * --model_path = None
+  * isdecaf = False
+  * data_path = data/wikipainting_10/wikipainting_10_test
+  * model_path = None
 
 --data_path argument can reference the test folder or the image file, depending on the type of evaluation.
+
 --isdecaf is necessary for the moment, because the evaluation for a decaf model is not exactly the same, due to a bug that will be fixed in the near future.
 
 

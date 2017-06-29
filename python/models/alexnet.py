@@ -8,80 +8,59 @@ import os,sys
 
 
 
-def Alexnet(weights=None,nb_classes = 12,training_mode='full'):
-    trainable_conv = False
-    trainable_dense_1 = False
-    trainable_dense_2 = False
-    trainable_dense_3 = False
-    if training_mode=='partial_1':
-        trainable_dense_3 = True
-    elif training_mode=='partial_2':
-        trainable_dense_3 = True
-        trainable_dense_2 = True
-
-    elif training_mode=='partial_3':
-        trainable_dense_3 = True
-        trainable_dense_2 = True
-        trainable_dense_1 = True
-    elif training_mode=='full':
-        trainable_dense_3 = True
-        trainable_dense_2 = True
-        trainable_dense_1 = True
-        trainable_conv = True
-    else:
-        print('Bad training_mode argument. Should be : [ full | partial_1 | partial_2 | partial_3 ]')
+def alexnet(weights='alexnet',nb_classes = 25):
 
     inputs = Input(shape=(3,227,227))
 
 
-    conv_1 = Conv2D(96, (11, 11), strides=(4, 4), activation='relu',name='conv_1', kernel_initializer='he_normal',trainable=trainable_conv)(inputs)
+    conv_1 = Conv2D(96, (11, 11), strides=(4, 4), activation='relu',name='conv_1', kernel_initializer='he_normal',)(inputs)
 
     conv_2 = MaxPooling2D((3, 3), strides=(2, 2))(conv_1)
     conv_2 = _crosschannelnormalization(name="convpool_1")(conv_2)
 
     conv_2 = ZeroPadding2D((2, 2))(conv_2)
-    conv_2 = merge([Conv2D(128, (5, 5), activation="relu", kernel_initializer='he_normal', name='conv_2_' + str(i + 1),trainable=trainable_conv)(_splittensor(ratio_split=2, id_split=i)(conv_2)) for i in range(2)], mode='concat', concat_axis=1, name="conv_2")
+    conv_2 = merge([Conv2D(128, (5, 5), activation="relu", kernel_initializer='he_normal', name='conv_2_' + str(i + 1))(_splittensor(ratio_split=2, id_split=i)(conv_2)) for i in range(2)], mode='concat', concat_axis=1, name="conv_2")
 
     conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
     conv_3 = _crosschannelnormalization()(conv_3)
     conv_3 = ZeroPadding2D((1, 1))(conv_3)
-    conv_3 = Conv2D(384, 3, 3, activation='relu', name='conv_3', init='he_normal',trainable=trainable_conv)(conv_3)
+    conv_3 = Conv2D(384, 3, 3, activation='relu', name='conv_3', init='he_normal')(conv_3)
 
     conv_3 = ZeroPadding2D((1, 1))(conv_3)
-    conv_4 = merge([Conv2D(192, 3, 3, activation="relu", init='he_normal', name='conv_4_' + str(i + 1),trainable=trainable_conv)(_splittensor(ratio_split=2, id_split=i)(conv_3)) for i in range(2)], mode='concat', concat_axis=1, name="conv_4")
+    conv_4 = merge([Conv2D(192, 3, 3, activation="relu", init='he_normal', name='conv_4_' + str(i + 1))(_splittensor(ratio_split=2, id_split=i)(conv_3)) for i in range(2)], mode='concat', concat_axis=1, name="conv_4")
 
     conv_4 = ZeroPadding2D((1, 1))(conv_4)
-    conv_5 = merge([Conv2D(128, 3, 3, activation="relu", init='he_normal', name='conv_5_' + str(i + 1),trainable=trainable_conv)(_splittensor(ratio_split=2, id_split=i)(conv_4)) for i in range(2)], mode='concat', concat_axis=1, name="conv_5")
+    conv_5 = merge([Conv2D(128, 3, 3, activation="relu", init='he_normal', name='conv_5_' + str(i + 1))(_splittensor(ratio_split=2, id_split=i)(conv_4)) for i in range(2)], mode='concat', concat_axis=1, name="conv_5")
 
     dense_1 = MaxPooling2D((3, 3), strides=(2, 2), name="convpool_5")(conv_5)
 
     dense_1 = Flatten(name="flatten")(dense_1)
-    dense_1 = Dense(4096, activation='relu', name='dense_1', init='he_normal',trainable=trainable_dense_1)(dense_1)
+    dense_1 = Dense(4096, activation='relu', name='dense_1', init='he_normal')(dense_1)
     dense_2 = Dropout(0.5)(dense_1)
-    dense_2 = Dense(4096, activation='relu', name='dense_2', init='he_normal',trainable=trainable_dense_2)(dense_2)
+    dense_2 = Dense(4096, activation='relu', name='dense_2', init='he_normal')(dense_2)
     dense_3 = Dropout(0.5)(dense_2)
-    dense_3 = Dense(nb_classes, name='dense_3_new', init='he_normal',trainable=trainable_dense_3)(dense_3)
+    dense_3 = Dense(nb_classes, name='dense_3_new', init='he_normal')(dense_3)
 
     prediction = Activation("softmax", name="softmax")(dense_3)
 
     alexnet = Model(input=inputs, output=prediction)
 
-    if weights!=None:
-        alexnet.load_weights(weights, by_name=True)
+    if weights!='alexnet':
+        alexnet.load_weights('./weights/alexnet_weights.h5', by_name=True)
     
     return alexnet
 
 
-def decaf(weights=None,rank=6):
+def decaf(weights='alexnet',rank=6,n_retrain_layers=0):
     inputs = Input(shape=(3,227,227))
 
-    conv_1 = Conv2D(96, (11, 11), strides=(4, 4), activation='relu',name='conv_1', kernel_initializer='he_normal',trainable=False)(inputs)
+    conv_1 = Conv2D(96, (11, 11), strides=(4, 4), activation='relu',name='conv_1', kernel_initializer='he_normal')(inputs)
 
     conv_2 = MaxPooling2D((3, 3), strides=(2, 2))(conv_1)
     conv_2 = _crosschannelnormalization(name="convpool_1")(conv_2)
 
     conv_2 = ZeroPadding2D((2, 2))(conv_2)
-    conv_2 = Concatenate(axis=1,name='conv_2')([Conv2D(128, (5, 5), activation="relu", kernel_initializer='he_normal', name='conv_2_' + str(i + 1),trainable=False)(_splittensor(ratio_split=2, id_split=i)(conv_2)) for i in range(2)])
+    conv_2 = Concatenate(axis=1,name='conv_2')([Conv2D(128, (5, 5), activation="relu", kernel_initializer='he_normal', name='conv_2_' + str(i + 1))(_splittensor(ratio_split=2, id_split=i)(conv_2)) for i in range(2)])
 
     conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
     conv_3 = _crosschannelnormalization()(conv_3)
@@ -89,28 +68,34 @@ def decaf(weights=None,rank=6):
     conv_3 = Conv2D(384, (3, 3), activation='relu', name='conv_3', kernel_initializer='he_normal',trainable=False)(conv_3)
 
     conv_3 = ZeroPadding2D((1, 1))(conv_3)
-    conv_4 = Concatenate(axis=1,name='conv_4')([Conv2D(192, (3, 3), activation="relu", kernel_initializer='he_normal', name='conv_4_' + str(i + 1),trainable=False)(_splittensor(ratio_split=2, id_split=i)(conv_3)) for i in range(2)])
+    conv_4 = Concatenate(axis=1,name='conv_4')([Conv2D(192, (3, 3), activation="relu", kernel_initializer='he_normal', name='conv_4_' + str(i + 1))(_splittensor(ratio_split=2, id_split=i)(conv_3)) for i in range(2)])
 
     conv_4 = ZeroPadding2D((1, 1))(conv_4)
-    conv_5 = Concatenate(axis=1,name='conv_5')([Conv2D(128, (3, 3), activation="relu", kernel_initializer='he_normal', name='conv_5_' + str(i + 1),trainable=False)(_splittensor(ratio_split=2, id_split=i)(conv_4)) for i in range(2)])
+    conv_5 = Concatenate(axis=1,name='conv_5')([Conv2D(128, (3, 3), activation="relu", kernel_initializer='he_normal', name='conv_5_' + str(i + 1))(_splittensor(ratio_split=2, id_split=i)(conv_4)) for i in range(2)])
 
     dense_1 = MaxPooling2D((3, 3), strides=(2, 2), name="convpool_5")(conv_5)
     dense_1 = Flatten(name="flatten")(dense_1)
 
     
     if rank!=5 :
-        dense_1 = Dense(4096, kernel_initializer='he_normal',trainable=False)(dense_1)
+        dense_1 = Dense(4096, kernel_initializer='he_normal')(dense_1)
         if rank == 7 :
-            dense_1 =  Dense(4096, kernel_initializer='he_normal',trainable=False)(dense_1)
+            dense_1 =  Dense(4096, kernel_initializer='he_normal')(dense_1)
             
     last = dense_1
     prediction = Activation("relu", name="relu")(last)
 
-    alexnet = Model(input=inputs, output=prediction)
-    if weights!=None:
-        alexnet.load_weights(weights, by_name=True)
-    
-    return alexnet    
+    model = Model(input=inputs, output=prediction)
+    if weights=='alexnet':
+        model.load_weights('./weights/alexnet_weights.h5', by_name=True)
+
+    split_value = len(model.layers) - n_retrain_layers
+    for layer in model.layers[:split_value]:
+        layer.trainable = False
+    for layer in model.layers[split_value:]:
+        layer.trainable = True
+
+    return model
 
 
 def _splittensor(axis=1, ratio_split=1, id_split=0):

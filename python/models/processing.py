@@ -12,11 +12,15 @@ from keras.callbacks import TensorBoard,EarlyStopping,ModelCheckpoint
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
 
-def train_model_from_directory(directory_path,model,model_name ='model',saving=True,target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None):
+def train_model_from_directory(directory_path,model,model_name ='model',target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None,params=None):
+
+    # Naming and creating folder
     now = datetime.datetime.now()
     model_name = model_name+'_' + str(now.year) + '_' + str(now.month) + '_' + str(now.day) + '-' + str(now.hour) +':'+ str(now.minute) +':'+ str(now.second)
     MODEL_DIR = join(SAVINGS_DIR, model_name)
     os.makedirs(MODEL_DIR)
+
+    # Calculate the number of steps, in order to use all the set for one epoch
 
     n_files = count_files(directory_path)
     n_val_files = count_files(validation_path)
@@ -24,15 +28,14 @@ def train_model_from_directory(directory_path,model,model_name ='model',saving=T
         steps_per_epoch = n_files//batch_size
     if validation_steps==None:
         validation_steps = n_val_files//batch_size
-    
-    if saving:
-        params={"batch size":batch_size ,"horizontal flip":horizontal_flip,"epochs":epochs,"steps per epoch":steps_per_epoch,"validation steps":validation_steps}
-        _presaving(model,MODEL_DIR,params)
 
+    _presaving(model,MODEL_DIR,params)
+
+    # Training
     train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = horizontal_flip)
     test_datagen = ImageDataGenerator(rescale=1./255)
     train_generator = train_datagen.flow_from_directory(directory_path, target_size = target_size, batch_size = batch_size, class_mode='categorical')
-    tbCallBack = TensorBoard(log_dir=MODEL_DIR, histogram_freq=0, write_graph=True, write_images=True)       
+    tbCallBack = TensorBoard(log_dir=MODEL_DIR, histogram_freq=0, write_graph=True, write_images=True)
     if validation_path!=None:
         checkpoint = ModelCheckpoint(join(MODEL_DIR,'model.h5'), monitor='val_acc', verbose=1, save_best_only=True, mode='max')
         validation_generator = test_datagen.flow_from_directory(validation_path,target_size=target_size,batch_size=batch_size,class_mode='categorical')
@@ -40,8 +43,8 @@ def train_model_from_directory(directory_path,model,model_name ='model',saving=T
     else:
         history  = model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs = epochs,callbacks = [tbCallBack])
 
-    if saving:
-        _postsaving(model,history,MODEL_DIR)
+    _postsaving(model,history,MODEL_DIR)
+
     return model
 
 def continue_training(model_path,directory_path,saving=True,target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=1000,validation_path=None,validation_steps=110):

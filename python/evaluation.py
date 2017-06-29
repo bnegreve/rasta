@@ -10,6 +10,8 @@ import os
 from os.path import join
 import argparse
 from progressbar import ProgressBar
+from sklearn.metrics import accuracy_score,confusion_matrix
+from matplotlib import pyplot as plt
 
 
 def main():
@@ -93,7 +95,6 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
     for style_name in style_names:
         style_path = join(test_data_path, style_name)
         img_names = os.listdir(style_path)
-        size = len(img_names)
         label = dico.get(style_name)
         for img_name in img_names:
             img = image.open(join(style_path, img_name))
@@ -134,5 +135,48 @@ def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
     return [inv_dico.get(a) for a in args_sorted[:top_k]]
 
 
+def get_top_mutli_acc(model_path, test_data_path, is_decaf6=False,k_list =None):
+    y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6, max(k_list))
+    score = 0
+    scores = []
+    for k in k_list:
+        for pred, val in zip(y_pred[:k], y):
+            if val in pred:
+                score += 1
+        scores.append(score / len(y))
+    return scores
+
+def plot_confusion_matrix(labels,preds):
+    conf_arr = confusion_matrix(labels, preds)
+
+    dico = get_dico()
+
+    new_conf_arr = []
+    for row in conf_arr:
+        new_conf_arr.append(row / sum(row))
+
+    plt.matshow(new_conf_arr)
+    plt.yticks(range(25), dico.keys())
+    plt.xticks(range(25), dico.keys(), rotation=90)
+    plt.colorbar()
+    plt.show()
+
+def get_per_class_accuracy(labels,preds):
+    names = []
+    accs = []
+    dico = get_dico()
+    inv_dico = {v: k for k, v in dico.items()}
+    for value in set(labels):
+        s = 0
+        n = 0
+        for i in range(len(labels)):
+            if (labels[i] == value):
+                n = n + 1
+                if (preds[i] == value):
+                    s = s + 1
+        names.append(inv_dico.get(value))
+        accs.append(s / n * 100, )
+
 if __name__ == '__main__':
-    main()
+    #main()
+    print(get_top_mutli_acc('../savings/xception_2017_6_21-14:46:54/best_model.h5','../data/wikipaintings_10/wikipaintings_test',k_list=[1,3,5]))
