@@ -8,4 +8,4 @@ PyYAML
 scipy
 six
 Theano
-
+progressbar2
