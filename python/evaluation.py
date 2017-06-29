@@ -17,6 +17,8 @@ from matplotlib import pyplot as plt
 def main():
     PATH = os.path.dirname(__file__)
 
+    K.set_image_data_format('channels_last')
+
     parser = argparse.ArgumentParser(description='Description')
 
     parser.add_argument('-t', action="store", default='acc', dest='type', help='Type of evaluation [pred|acc]')
@@ -70,7 +72,6 @@ def get_test_accuracy(model_path, test_data_path, is_decaf6=False,top_k=1):
 
 
 def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
-    K.set_image_data_format('channels_first')
 
     if is_decaf6:
         base_model = decaf()
@@ -102,7 +103,7 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
             img_np = np.asarray(img, dtype='uint8')
             img_np = np.divide(img_np, 255)
             x = img_np[..., np.newaxis]
-            x = x.transpose(3, 0, 1, 2)
+            x = x.transpose(3, 0, 1,2)
             pred = model.predict(x)
             args_sorted = np.argsort(pred)[0][::-1]
             y.append(label)
@@ -127,7 +128,7 @@ def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
     img_np = np.asarray(img, dtype='uint8')
     img_np = np.divide(img_np, 255)
     x = img_np[..., np.newaxis]
-    x = x.transpose(3, 0, 1, 2)
+    x = x.transpose(3,0, 1,2)
     pred = model.predict(x)
     dico = get_dico()
     inv_dico = {v: k for k, v in dico.items()}
@@ -137,9 +138,9 @@ def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
 
 def get_top_mutli_acc(model_path, test_data_path, is_decaf6=False,k_list =None):
     y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6, max(k_list))
-    score = 0
     scores = []
     for k in k_list:
+        score = 0
         for pred, val in zip(y_pred[:k], y):
             if val in pred:
                 score += 1
@@ -179,4 +180,4 @@ def get_per_class_accuracy(labels,preds):
 
 if __name__ == '__main__':
     #main()
-    print(get_top_mutli_acc('../savings/xception_2017_6_21-14:46:54/best_model.h5','../data/wikipaintings_10/wikipaintings_test',k_list=[1,3,5]))
+    print(get_top_mutli_acc('../savings/resnet_2017_6_21-11:57:20/best_model.h5','../data/wikipaintings_10/wikipaintings_test',k_list=[1,3,5]))

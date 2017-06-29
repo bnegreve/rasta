@@ -3,9 +3,10 @@ from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
 from keras.layers.merge import Concatenate
 from keras.models import Model
 from keras import backend as K
-import os,sys
+import sys
+from os.path import join
 
-
+PATH = os.path.dirname(__file__)
 
 
 def alexnet(weights='alexnet',nb_classes = 25):
@@ -46,7 +47,7 @@ def alexnet(weights='alexnet',nb_classes = 25):
     alexnet = Model(input=inputs, output=prediction)
 
     if weights!='alexnet':
-        alexnet.load_weights('./weights/alexnet_weights.h5', by_name=True)
+        alexnet.load_weights(join('./weights/alexnet_weights.h5'), by_name=True)
     
     return alexnet
 
@@ -87,7 +88,7 @@ def decaf(weights='alexnet',rank=6,n_retrain_layers=0):
 
     model = Model(input=inputs, output=prediction)
     if weights=='alexnet':
-        model.load_weights('./weights/alexnet_weights.h5', by_name=True)
+        model.load_weights(join('./weights/alexnet_weights.h5'), by_name=True)
 
     split_value = len(model.layers) - n_retrain_layers
     for layer in model.layers[:split_value]:
