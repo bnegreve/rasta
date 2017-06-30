@@ -9,5 +9,5 @@ echo "parametres: "$*
 
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:~/cuda/lib64
 
-python3 ../run.py -m=$1 -b=$2 -e=$3 -f=$4 -n=$5 -d=$6 --multi_gpu=$7 --train_path=$8 --val_path=$9
+python3 ../run.py -m=$1 -b=$2 -e=$3 -f=$4 -n=$5 -d=$6 --train_path=$7 --val_path=$8
 

@@ -1,1 +1,1 @@
-model_name batch_size epochs horizontal_flip n_layers_trainable dropout_rate multi_gpu train_path val_path
+model_name batch_size epochs horizontal_flip n_layers_trainable dropout_rate train_path val_path

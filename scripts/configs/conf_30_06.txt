@@ -1,0 +1,2 @@
+resnet 128 100 True 50 -1 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+

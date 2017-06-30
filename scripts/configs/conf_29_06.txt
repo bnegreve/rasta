@@ -1,9 +1,9 @@
-empty_resnet 256 100 True -1 -1 True ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
-empty_resnet 256 100 False -1 -1 True ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
-resnet 128 100 True 10 -1 True ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
-resnet 128 100 True 20 -1 True ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
-resnet 128 100 True 30 -1 True ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
-resnet 128 100 True 40 -1 True ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
-dropout_resnet 128 100 True -1 0.5 True ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
-dropout_resnet 128 100 True -1 0.8 True ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+empty_resnet 256 100 True -1 -1 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+empty_resnet 256 100 False -1 -1 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+resnet 128 100 True 10 -1 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+resnet 128 100 True 20 -1 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+resnet 128 100 True 30 -1 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+resnet 128 100 True 40 -1 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+dropout_resnet 128 100 True -1 0.5 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
+dropout_resnet 128 100 True -1 0.8 ../data/wikipaintings/wikipaintings_train ../data/wikipaintings/wikipaintings_val
 
