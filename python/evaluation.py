@@ -113,7 +113,7 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
             y_pred.append([a for a in args_sorted[:top_k]])
             i += 1
             bar.update(i)
-    return y_pred, y
+    return np.asarray(y_pred), y
 
 
 def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
@@ -142,16 +142,17 @@ def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
     return [inv_dico.get(a) for a in args_sorted[:top_k]]
 
 
-def get_top_mutli_acc(model_path, test_data_path, is_decaf6=False,k_list =None):
-    y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6, max(k_list))
+def get_top_multi_acc(model_path, test_data_path, is_decaf6=False,top_k=[1,3,5]):
+    y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6, max(top_k))
     scores = []
-    for k in k_list:
+    for k in top_k:
         score = 0
-        for pred, val in zip(y_pred[:k], y):
+        for pred, val in zip(y_pred[:,:k], y):
             if val in pred:
                 score += 1
         scores.append(score / len(y))
     return scores
+
 
 def plot_confusion_matrix(labels,preds):
     conf_arr = confusion_matrix(labels, preds)
@@ -186,4 +187,3 @@ def get_per_class_accuracy(labels,preds):
 
 if __name__ == '__main__':
     main()
-
