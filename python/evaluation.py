@@ -38,13 +38,16 @@ def main():
     model_path = args.model_path
     data_path = args.data_path
     isdecaf = args.isdecaf
-    k = (args.k).split(",")
+    k = (str(args.k)).split(",")
+    k = [int(val) for val in k]
     print(k)
     if model_path == None:
         print('Please run providing argument --model_path')
     else:
         if eval_type == 'acc':
-            print('\nAccuracy : {}%'.format(get_test_accuracy(model_path, data_path, isdecaf, top_k=k) * 100))
+            preds = get_top_multi_acc(model_path, data_path,top_k=k)
+            for val,pred in zip(k,preds):
+                print('\nTop-{} accuracy : {}%'.format(val,pred*100))
         elif eval_type == 'pred':
             print("Top-{} prediction : {}".format(k, get_pred(model_path, data_path, is_decaf6=isdecaf, top_k=k)))
         else:
