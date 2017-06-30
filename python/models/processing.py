@@ -17,8 +17,15 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
     # Naming and creating folder
     now = datetime.datetime.now()
     model_name = model_name+'_' + str(now.year) + '_' + str(now.month) + '_' + str(now.day) + '-' + str(now.hour) +':'+ str(now.minute) +':'+ str(now.second)
-    MODEL_DIR = join(SAVINGS_DIR, model_name)
+
+    model_name_temp = model_name
+    i=0
+    while os._exists(join(SAVINGS_DIR,model_name_temp)):
+        model_name_temp=model_name+'('+i+')'
+        i+=1
+    MODEL_DIR = join(SAVINGS_DIR,model_name_temp)
     os.makedirs(MODEL_DIR)
+
 
     # Calculate the number of steps, in order to use all the set for one epoch
 

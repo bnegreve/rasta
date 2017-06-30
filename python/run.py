@@ -93,6 +93,22 @@ elif model_name=='dropout_resnet':
     predictions = Dense(25, activation='softmax')(base_model.output)
     model = Model(inputs=base_model.input, outputs=predictions)
 
+elif model_name=='resnet_18':
+    K.set_image_data_format('channels_last')
+    model =  resnet18()
+
+elif model_name=='resnet_34':
+    K.set_image_data_format('channels_last')
+    model =  resnet18()
+
+elif model_name=='resnet_101':
+    K.set_image_data_format('channels_last')
+    model =  resnet18()
+
+elif model_name=='resnet_152':
+    K.set_image_data_format('channels_last')
+    model =  resnet18()
+
 if multi_gpu:
     model = to_multi_gpu(model)
 

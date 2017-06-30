@@ -3,6 +3,7 @@ from keras.layers.pooling import GlobalAveragePooling2D
 from keras.models import Model
 from keras.layers import Dropout
 from keras import backend as K
+from resnet_build import ResnetBuilder
 
 
 
@@ -36,14 +37,19 @@ def dropout_resnet(dropout_rate=0.5):
     return model
 
 
-
+def resnet18():
+    return ResnetBuilder.build_resnet_18((3,224,224),25)
+def resnet34():
+    return ResnetBuilder.build_resnet_34((3,224,224),25)
+def resnet101():
+    return ResnetBuilder.build_resnet_101((3,224,224),25)
+def resnet152():
+    return ResnetBuilder.build_resnet_152((3,224,224),25)
 
 def main():
-    model = resnet_trained(8)
+    model = resnet18()
     print(model.summary())
-    for layer in model.layers:
-        if layer.trainable:
-            print(layer.name)
+
 
 if __name__ == '__main__':
     main()
