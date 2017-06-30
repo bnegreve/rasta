@@ -94,18 +94,22 @@ elif model_name=='dropout_resnet':
     model = Model(inputs=base_model.input, outputs=predictions)
 
 elif model_name=='resnet_18':
+    size = (224, 224)
     K.set_image_data_format('channels_last')
     model =  resnet18()
 
 elif model_name=='resnet_34':
+    size = (224, 224)
     K.set_image_data_format('channels_last')
     model =  resnet18()
 
 elif model_name=='resnet_101':
+    size = (224, 224)
     K.set_image_data_format('channels_last')
     model =  resnet18()
 
 elif model_name=='resnet_152':
+    size = (224, 224)
     K.set_image_data_format('channels_last')
     model =  resnet18()
 
