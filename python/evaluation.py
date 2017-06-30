@@ -24,7 +24,7 @@ def main():
     parser.add_argument('-t', action="store", default='acc', dest='type', help='Type of evaluation [pred|acc]')
     parser.add_argument('--isdecaf', action="store", default=False, type=bool, dest='isdecaf',
                         help='if the model is a decaf6 type')
-    parser.add_argument('-k', action="store", default=1, type=int, dest='k', help='top-k number')
+    parser.add_argument('-k', action="store", default=1, type=str, dest='k', help='top-k number')
     parser.add_argument('--data_path', action="store",
                         default=join(PATH, '../data/wikipaintings_10/wikipaintings_test'), dest='data_path',
                         help='Path of the data (image or train folder)')
@@ -38,8 +38,8 @@ def main():
     model_path = args.model_path
     data_path = args.data_path
     isdecaf = args.isdecaf
-    k = args.k
-
+    k = (args.k).split(",")
+    print(k)
     if model_path == None:
         print('Please run providing argument --model_path')
     else:
