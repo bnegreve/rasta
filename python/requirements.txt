@@ -9,3 +9,6 @@ scipy
 six
 Theano
 progressbar2
+h5py
+sklearn
+

@@ -54,7 +54,7 @@ def main():
 def get_dico():
     classes = []
     PATH = os.path.dirname(__file__)
-    directory = join(PATH,'../data/wikipaintings/wikipaintings_train')
+    directory = join(PATH,'../data/wikipaintings_10/wikipaintings_train')
     for subdir in sorted(os.listdir(directory)):
         if os.path.isdir(os.path.join(directory, subdir)):
             classes.append(subdir)
