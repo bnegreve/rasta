@@ -12,7 +12,7 @@ import argparse
 from progressbar import ProgressBar
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
-
+import json
 
 def main():
     PATH = os.path.dirname(__file__)
@@ -30,6 +30,7 @@ def main():
                         help='Path of the data (image or train folder)')
     parser.add_argument('--model_path', action="store", default=None, dest='model_path',
                         help='Path of the h5 model file')
+    parser.add_argument('-j', action="store_true", dest='json', help='Output prediction as json')
 
     args = parser.parse_args()
 
@@ -49,7 +50,12 @@ def main():
             for val,pred in zip(k,preds):
                 print('\nTop-{} accuracy : {}%'.format(val,pred*100))
         elif eval_type == 'pred':
-            print("Top-{} prediction : {}".format(k, get_pred(model_path, data_path, is_decaf6=isdecaf, top_k=k)))
+            pred = get_pred(model_path, data_path, is_decaf6=isdecaf, top_k=k)
+            if args.json:
+                result = { 'pred' : pred, 'k' : k }
+                print(json.dumps(result))
+            else:
+                print("Top-{} prediction : {}".format(k, pred))
         else:
             print('Error in arguments. Please try with -h')
 
