@@ -50,6 +50,7 @@ def main():
             for val,pred in zip(k,preds):
                 print('\nTop-{} accuracy : {}%'.format(val,pred*100))
         elif eval_type == 'pred':
+            k = k[0]
             pred = get_pred(model_path, data_path, is_decaf6=isdecaf, top_k=k)
             if args.json:
                 result = { 'pred' : pred, 'k' : k }
