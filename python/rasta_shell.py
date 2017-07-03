@@ -56,9 +56,11 @@ def query_predict(model, query):
                 "user_error_msg": "Cannot download ressource at url '{}'. Exception {} occured.".format(url, str(type(e))) }
         return respond(resp)
 
-    pred = get_pred(model, '/tmp/rasta_tmp', IS_DECAF, K)
+    pred,pcts = get_pred(model, '/tmp/rasta_tmp', IS_DECAF, K)
 
-    resp = { 'pred' : pred, 'k' : K }
+    pcts = [ str(i) for i in pcts ]
+    resp = { 'pred' : pred, 'pcts' : pcts, 'k' : K }
+
     return respond(resp)
 
 

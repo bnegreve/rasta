@@ -13,10 +13,11 @@ from progressbar import ProgressBar
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 import json
+from datetime import datetime
 
 def main():
     PATH = os.path.dirname(__file__)
-
+    RESULT_FILE_PATH  = join(PATH,'../savings/results.csv')
     K.set_image_data_format('channels_last')
 
     parser = argparse.ArgumentParser(description='Description')
@@ -24,13 +25,15 @@ def main():
     parser.add_argument('-t', action="store", default='acc', dest='type', help='Type of evaluation [pred|acc]')
     parser.add_argument('--isdecaf', action="store", default=False, type=bool, dest='isdecaf',
                         help='if the model is a decaf6 type')
-    parser.add_argument('-k', action="store", default=1, type=str, dest='k', help='top-k number')
+    parser.add_argument('-k', action="store", default='1,3,5', type=str, dest='k', help='top-k number')
     parser.add_argument('--data_path', action="store",
                         default=join(PATH, '../data/wikipaintings_10/wikipaintings_test'), dest='data_path',
                         help='Path of the data (image or train folder)')
     parser.add_argument('--model_path', action="store", default=None, dest='model_path',
                         help='Path of the h5 model file')
     parser.add_argument('-j', action="store_true", dest='json', help='Output prediction as json')
+    parser.add_argument('-s', action="store_true", dest='save', help='Save accuracy in results file')
+
 
     args = parser.parse_args()
 
@@ -49,10 +52,18 @@ def main():
             preds = get_top_multi_acc(model_path, data_path,top_k=k)
             for val,pred in zip(k,preds):
                 print('\nTop-{} accuracy : {}%'.format(val,pred*100))
+
+            if args.save and k==[1,3,5]:
+                model_name = model_path.split('/')[-2]
+                print(model_name)
+                with open(RESULT_FILE_PATH,'a') as f:
+                       f.write('\n'+model_name+";"+str(preds[0])+";"+str(preds[1])+";"+str(preds[2])+';'+str(datetime.now()))
+
         elif eval_type == 'pred':
             k = k[0]
             model = init(model_path, is_decaf6)
-            pred = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k)
+            pred,pcts = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k)
+            print(pcts)
             if args.json:
                 result = { 'pred' : pred, 'k' : k }
                 print(json.dumps(result))
@@ -154,7 +165,9 @@ def get_pred(model, image_path, is_decaf6=False, top_k=1):
     dico = get_dico()
     inv_dico = {v: k for k, v in dico.items()}
     args_sorted = np.argsort(pred)[0][::-1]
-    return [inv_dico.get(a) for a in args_sorted[:top_k]]
+    preds = [inv_dico.get(a) for a in args_sorted[:top_k]]
+    pcts = [pred[0][a] for a in args_sorted[:top_k]]
+    return preds,pcts
 
 
 def get_top_multi_acc(model_path, test_data_path, is_decaf6=False,top_k=[1,3,5]):
