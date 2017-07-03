@@ -51,7 +51,8 @@ def main():
                 print('\nTop-{} accuracy : {}%'.format(val,pred*100))
         elif eval_type == 'pred':
             k = k[0]
-            pred = get_pred(model_path, data_path, is_decaf6=isdecaf, top_k=k)
+            model = init(model_path, is_decaf6)
+            pred = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k)
             if args.json:
                 result = { 'pred' : pred, 'k' : k }
                 print(json.dumps(result))
@@ -126,7 +127,7 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
     return np.asarray(y_pred), y
 
 
-def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
+def init(model_path, is_decaf6=False):
     if is_decaf6:
         K.set_image_data_format('channels_first')
         base_model = decaf()
@@ -136,7 +137,11 @@ def get_pred(model_path, image_path, is_decaf6=False, top_k=1):
     else:
         model = load_model(model_path)
     model.compile(optimizer='rmsprop', loss='categorical_crossentropy',
-                  metrics=['accuracy', metrics.top_k_categorical_accuracy])
+                  metrics=['accuracy', metrics.top_k_categorical_accuracy])    
+    return model 
+
+def get_pred(model, image_path, is_decaf6=False, top_k=1):
+
     img = image.open(image_path)
     img = img.resize((227, 227))
     img_np = np.asarray(img, dtype='uint8')
