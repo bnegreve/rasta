@@ -4,6 +4,7 @@
 
 from sys import stdin
 from urllib.request import urlretrieve
+from urllib.parse import urlparse, parse_qs
 from urllib.error import URLError
 from evaluation import get_pred, init
 import json
@@ -14,9 +15,12 @@ K = 3
 
 def main():
     model = init(MODEL_PATH, IS_DECAF)
+    print("Query: ")
     for line in stdin:
         resp = ''
-        print(process_query(model, line))    
+        print(process_query(model, line))
+        print("Query: ")
+
 
     
 def respond(content):
