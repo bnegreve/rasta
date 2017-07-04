@@ -33,6 +33,7 @@ def main():
                         help='Path of the h5 model file')
     parser.add_argument('-j', action="store_true", dest='json', help='Output prediction as json')
     parser.add_argument('-s', action="store_true", dest='save', help='Save accuracy in results file')
+    parser.add_argument('-b', action="store_true", dest='b', help='Sets bagging')
 
 
     args = parser.parse_args()
@@ -49,7 +50,7 @@ def main():
         print('Please run providing argument --model_path')
     else:
         if eval_type == 'acc':
-            preds = get_top_multi_acc(model_path, data_path,top_k=k)
+            preds = get_top_multi_acc(model_path, data_path,top_k=k,bagging=args.b)
             for val,pred in zip(k,preds):
                 print('\nTop-{} accuracy : {}%'.format(val,pred*100))
 
@@ -61,7 +62,7 @@ def main():
 
         elif eval_type == 'pred':
             k = k[0]
-            model = init(model_path, is_decaf6)
+            model = init(model_path, isdecaf)
             pred,pcts = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k)
             print(pcts)
             if args.json:
@@ -84,8 +85,8 @@ def get_dico():
     return class_indices
 
 
-def get_test_accuracy(model_path, test_data_path, is_decaf6=False,top_k=1):
-    y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6,top_k=top_k)
+def get_test_accuracy(model_path, test_data_path, is_decaf6=False,top_k=1,bagging = False):
+    y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6,top_k=top_k,bagging=bagging)
     score = 0
     for pred, val in zip(y_pred, y):
         if val in pred:
@@ -93,7 +94,7 @@ def get_test_accuracy(model_path, test_data_path, is_decaf6=False,top_k=1):
     return score / len(y)
 
 
-def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
+def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1,bagging = False):
 
     if is_decaf6:
         K.set_image_data_format('channels_first')
@@ -122,20 +123,36 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1):
         label = dico.get(style_name)
         for img_name in img_names:
             img = image.open(join(style_path, img_name))
-            img = img.resize((227, 227))
-            img_np = np.asarray(img, dtype='uint8')
-            img_np = np.divide(img_np, 255)
-            x = img_np[..., np.newaxis]
-            x = x.transpose(3, 0, 1,2)
-            if is_decaf6:
-                x = x.transpose(0,3,2,1)
-            pred = model.predict(x)
+            if bagging:
+                pred = _bagging_predict(img,model)
+            else :
+                x = _preprocess_img(img,is_decaf6=is_decaf6)
+                pred = model.predict(x)
             args_sorted = np.argsort(pred)[0][::-1]
             y.append(label)
             y_pred.append([a for a in args_sorted[:top_k]])
             i += 1
             bar.update(i)
     return np.asarray(y_pred), y
+
+def _bagging_predict(img,model):
+    img_flip = img.transpose(image.FLIP_LEFT_RIGHT)
+    x = _preprocess_img(img)
+    x_flip = _preprocess_img(img_flip)
+    pred = model.predict(x)
+    pred_flip = model.predict(x_flip)
+    avg = np.mean(np.array([pred,pred_flip]), axis=0 )
+    return avg
+
+def _preprocess_img(img,is_decaf6=False):
+    img = img.resize((227, 227))
+    img_np = np.asarray(img, dtype='uint8')
+    img_np = np.divide(img_np, 255)
+    x = img_np[..., np.newaxis]
+    x = x.transpose(3, 0, 1, 2)
+    if is_decaf6:
+        x = x.transpose(0, 3, 2, 1)
+    return x
 
 
 def init(model_path, is_decaf6=False):
@@ -170,8 +187,8 @@ def get_pred(model, image_path, is_decaf6=False, top_k=1):
     return preds,pcts
 
 
-def get_top_multi_acc(model_path, test_data_path, is_decaf6=False,top_k=[1,3,5]):
-    y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6, max(top_k))
+def get_top_multi_acc(model_path, test_data_path, is_decaf6=False,top_k=[1,3,5],bagging=False):
+    y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6, max(top_k),bagging=bagging)
     scores = []
     for k in top_k:
         score = 0
