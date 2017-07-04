@@ -9,7 +9,7 @@ from resnet_build import ResnetBuilder
 
 def resnet_trained(n_retrain_layers = 0):
     K.set_image_data_format('channels_last')
-    base_model = ResNet50(include_top=False)
+    base_model = ResNet50(include_top=False,input_shape=(224,224,3))
     features = GlobalAveragePooling2D()(base_model.output)
     model = Model(inputs=base_model.input, outputs=features)
     split_value = len(base_model.layers)+1-n_retrain_layers
@@ -20,16 +20,33 @@ def resnet_trained(n_retrain_layers = 0):
     return model
 
 
+def resnet_trained_2(n_retrain_layers = 0):
+    K.set_image_data_format('channels_last')
+    base_model = ResNet50(include_top=False, input_shape=(224, 224, 3))
+    features = GlobalAveragePooling2D()(base_model.output)
+    model = Model(inputs=base_model.input, outputs=features)
+    empty_model = empty_resnet()
+
+    split_value = len(base_model.layers) + 1 - n_retrain_layers
+    for layer in model.layers[:split_value]:
+        layer.trainable = False
+    for layer, layer_empty in zip(model.layers[split_value:], empty_model.layers[split_value:]):
+        layer.trainable = True
+        w = layer_empty.get_weights()
+        layer.set_weights(w)
+    return model
+
+
 def empty_resnet():
     K.set_image_data_format('channels_last')
-    base_model = ResNet50(weights=None,include_top=False)
+    base_model = ResNet50(weights=None,include_top=False,input_shape=(224,224,3))
     features = GlobalAveragePooling2D()(base_model.output)
     model = Model(inputs=base_model.input, outputs=features)
     return model
 
 def dropout_resnet(dropout_rate=0.5):
     K.set_image_data_format('channels_last')
-    base_model = ResNet50(weights=None,include_top=False)
+    base_model = ResNet50(weights=None,include_top=False,input_shape=(224,224,3))
     features = GlobalAveragePooling2D()(base_model.output)
     model = Model(inputs=base_model.input, outputs=features)
     dropout = Dropout(dropout_rate)(model.output)

@@ -78,6 +78,13 @@ elif model_name =='resnet':
     predictions = Dense(25, activation='softmax')(base_model.output)
     model = Model(inputs=base_model.input, outputs=predictions)
 
+elif model_name=='resnet2':
+    K.set_image_data_format('channels_last')
+    size=(224,224)
+    base_model = resnet_trained_2(n_layers_trainable)
+    predictions = Dense(25, activation='softmax')(base_model.output)
+    model = Model(inputs=base_model.input, outputs=predictions)
+
 elif model_name =='empty_resnet':
     K.set_image_data_format('channels_last')
     size = (224,224)
