@@ -29,6 +29,7 @@ model = None
 # def init(model, is_decaf):
 #     return None
 
+
    
 def query_predict(httpd, model, query):
 
@@ -89,7 +90,11 @@ def query_predict(httpd, model, query):
 
     # making prediction
 
-    pred,pcts = get_pred(model, '/tmp/rasta_tmp', IS_DECAF, K)
+    try:
+        pred,pcts = get_pred(model, '/tmp/rasta_tmp', IS_DECAF, K)
+    except Exception as e:
+        msg = "Cannot load image, please try another image."
+        return httpd.respond_with_user_error(5, msg)
     
     pcts = [ str(i) for i in pcts ]
     resp = { 'pred' : pred, 'pcts' : pcts, 'k' : K }
