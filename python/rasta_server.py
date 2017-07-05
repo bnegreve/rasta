@@ -5,12 +5,11 @@ import subprocess
 import json
 from urllib.error import URLError
 from urllib.request import urlopen
-import urllib.parse
+from urllib.parse import unquote, urlparse, parse_qs
 from PIL import Image
-
-
-from evaluation import get_pred, init
+from os import stat
 from socket import timeout
+from evaluation import get_pred, init
 
 PORT = 4000
 
@@ -23,7 +22,14 @@ USER_AGENT_STRING="Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firef
 
 
 model = None
-    
+ 
+# #dummy functs (just for testing without having to load the model)
+# def get_pred(a,b,c,d):
+#     return ([], [])
+# def init(model, is_decaf):
+#     return None
+
+   
 def query_predict(httpd, model, query):
 
     result = {}
@@ -33,6 +39,7 @@ def query_predict(httpd, model, query):
         return httpd.respond_with_error(422, msg)
 
     url = query['url'][0]
+
     ressource = None
 
     # check URL
@@ -95,24 +102,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def respond(self, data):
         data['error'] = 200
-        datastr = json.dumps(data).encode("utf-8")
+        datastr = json.dumps(data, ensure_ascii=False)
         self.send_response(data['error'])
-        self.send_header("Content-type", 'text/json')
+        self.send_header("Content-type", 'text/json; charset=utf-8')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-        self.wfile.write(datastr)
-        print("Response ({}): ".format(datastr));
+        self.wfile.write(datastr.encode('utf-8'))
+        print("Response ({}): ".format(datastr).encode('utf-8'));
         return 200
 	
     def respond_with_error(self, err, msg):
         print("Sending error: " + msg)
-        datastr = json.dumps({ 'error' : err, 'error_msg' : msg }).encode("utf-8")
+        datastr = json.dumps({ 'error' : err, 'error_msg' : msg }, ensure_ascii=False)
         self.send_response(err)
         self.send_header("Content-type", 'text/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-        self.wfile.write(datastr)
-        print("Response (Error!: {}): {}".format(err, datastr))
+        self.wfile.write(datastr.encode("utf-8"))
+        print("Response (Error!: {}): {}".format(err, datastr.encode("utf-8")))
         return err
 
     def respond_with_user_error(self, user_err_code, user_err_msg):
@@ -120,15 +127,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 "user_error_msg": user_err_msg }
         return self.respond(resp)
 
-
-
     def do_GET(self):
-        req = urllib.parse.urlparse(self.path)
+        req = urlparse(self.path)
         msg = "Ok"
         query = None
 
         try:
-            query = urllib.parse.parse_qs(req.query, strict_parsing = True)
+            query = parse_qs(req.query, strict_parsing = True)
         except ValueError as e:
             msg = "Error: cannot parse query: '" + req.query + "'"
             return self.respond_with_error(422, msg)
