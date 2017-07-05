@@ -65,7 +65,6 @@ def query_predict(httpd, model, query):
         return httpd.respond_with_error(500, msg)
     
     resinfo = ressource.info()
-    print(str(resinfo))
     if 'Content-Length' in resinfo:
         # TODO catch non int content-length
         if int(resinfo['Content-Length']) >= MAX_FILE_SIZE:
@@ -170,6 +169,8 @@ def main():
     model = init(MODEL_PATH, IS_DECAF) # todo outch
 
     print("serving at port", PORT)
+
+    sys.stderr = open('rasta.log', 'w')
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
