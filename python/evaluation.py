@@ -145,7 +145,7 @@ def _bagging_predict(img,model):
     return avg
 
 def _preprocess_img(img,is_decaf6=False):
-    img = img.resize((227, 227))
+    img = img.resize((224, 224))
     img_np = np.asarray(img, dtype='uint8')
     img_np = np.divide(img_np, 255)
     x = img_np[..., np.newaxis]
