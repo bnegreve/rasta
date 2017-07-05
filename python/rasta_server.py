@@ -6,13 +6,14 @@ import json
 from urllib.error import URLError
 from urllib.request import urlretrieve
 import urllib.parse
+from PIL import Image
 
 
 from evaluation import get_pred, init
 
 PORT = 4000
 
-MODEL_PATH='../savings/resnet_2017_6_29-18:42:50/model.h5'
+MODEL_PATH='../savings/best/model.h5'
 IS_DECAF = False
 K = 3
 
@@ -34,19 +35,22 @@ def query_predict(httpd, model, query):
         urlretrieve(url, '/tmp/rasta_tmp')
         #print("FILE " + str(ressource))
     except URLError as err:
-        resp = {"error": 200,
-                "user_error_msg": "Cannot download ressource at url '{}': {}".format(url, err.reason) }
-        return httpd.respond(resp)
-
+        msg = "Cannot download ressource at url '{}': {}.".format(url, err.reason) 
+        return httpd.respond_with_user_error(1, msg)
     except ValueError as err:
-        resp = {"error": 500,
-                "user_error_msg": "Cannot download ressource at url '{}'. Invalid URL.".format(url, str(type(err))) }
-        return httpd.respond(resp)
+        msg = "Cannot download ressource at url '{}'. Invalid URL.".format(url, str(type(err))) 
+        return httpd.respond_with_user_error(2, msg)
     except Exception as e:
-        resp = {"user_error": 500,
-                "user_error_msg": "Cannot download ressource at url '{}'. Exception {} occured.".format(url, str(type(e))) }
-        return httpd.respond(resp)
-    
+        msg = "Cannot download ressource at url '{}'. Exception {} occured.".format(url, str(type(e)))
+        return http.respond_with_error(self, 500, msg)
+
+    try:
+        img = Image.open('/tmp/rasta_tmp')
+        img.close()
+    except IOError:
+        msg = "Url does not point to a supported image file."
+        return httpd.respond_with_user_error(3, msg)
+
     pred,pcts = get_pred(model, '/tmp/rasta_tmp', IS_DECAF, K)
 
     pcts = [ str(i) for i in pcts ]
@@ -66,6 +70,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(datastr)
+        print("Response ({}): ".format(datastr));
+        return 200
 	
     def respond_with_error(self, err, msg):
         print("Sending error: " + msg)
@@ -75,7 +81,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(datastr)
-	    
+        print("Response (Error!: {}): {}".format(code, datastr))
+        return err
+
+    def respond_with_user_error(self, user_err_code, user_err_msg):
+        resp = {"user_error": user_err_code,
+                "user_error_msg": user_err_msg }
+        return self.respond(resp)
+
 
 
     def do_GET(self):
@@ -100,6 +113,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         
         global model
         result = Handler.query_dispatcher[ qtype ] ( self, model, query )
+
 
 def main():
     httpd = socketserver.TCPServer(("", PORT), Handler)
