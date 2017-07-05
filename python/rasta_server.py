@@ -102,6 +102,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             msg = "Error: cannot parse query: '" + req.query + "'"
             return self.respond_with_error(422, msg)
 
+        if 'remote_addr' in query:
+            print('Handling proxy query from ' + query.remote_addr)
+
         if not 'type' in query:
             msg = "Error: no type specified in query: " + req.query
             return self.respond_with_error(422, msg)
