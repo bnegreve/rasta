@@ -81,7 +81,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(datastr)
-        print("Response (Error!: {}): {}".format(code, datastr))
+        print("Response (Error!: {}): {}".format(err, datastr))
         return err
 
     def respond_with_user_error(self, user_err_code, user_err_msg):
