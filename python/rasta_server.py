@@ -4,18 +4,23 @@ import sys
 import subprocess
 import json
 from urllib.error import URLError
-from urllib.request import urlretrieve
+from urllib.request import urlopen
 import urllib.parse
 from PIL import Image
 
 
 from evaluation import get_pred, init
+from socket import timeout
 
 PORT = 4000
 
 MODEL_PATH='../savings/best/model.h5'
 IS_DECAF = False
 K = 3
+TIMEOUT=10
+MAX_FILE_SIZE=10 * 1024 * 1024 # 10 MB
+USER_AGENT_STRING="Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0"
+
 
 model = None
     
@@ -30,29 +35,55 @@ def query_predict(httpd, model, query):
     url = query['url'][0]
     ressource = None
 
+    # check URL
+
     try:
-        print("Downloading URL " + url)
-        urlretrieve(url, '/tmp/rasta_tmp')
-        #print("FILE " + str(ressource))
+        ressource = urlopen(url, timeout=TIMEOUT)
     except URLError as err:
-        msg = "Cannot download ressource at url '{}': {}.".format(url, err.reason) 
+        msg = "Cannot access ressource at url '{}': {}.".format(url, err.reason) 
         return httpd.respond_with_user_error(1, msg)
+    except timeout as e:
+        msg = "Cannot access ressource at url '{}'. Timeout.".format(url)
+        return httpd.respond_with_user_error(22, msg)
     except ValueError as err:
-        msg = "Cannot download ressource at url '{}'. Invalid URL.".format(url, str(type(err))) 
+        msg = "Cannot access ressource at url '{}'. Invalid URL.".format(url, str(type(err))) 
         return httpd.respond_with_user_error(2, msg)
     except Exception as e:
+        msg = "Cannot access ressource at url '{}'. Exception {} occured.".format(url, str(type(e)))
+        return httpd.respond_with_error(500, msg)
+    
+    resinfo = ressource.info()
+    print(str(resinfo))
+    if 'Content-Length' in resinfo:
+        # TODO catch non int content-length
+        if int(resinfo['Content-Length']) >= MAX_FILE_SIZE:
+            msg = "Cannot download ressource at url '{}': File is too big (Max file size: {}kB).".format(url, MAX_FILE_SIZE / 1024) 
+            return httpd.respond_with_user_error(3, msg)
+
+
+    # download file
+
+    f = None
+    try:
+        f = open('/tmp/rasta_tmp','wb')
+        f.write(ressource.read(MAX_FILE_SIZE))
+    except Exception as e:
         msg = "Cannot download ressource at url '{}'. Exception {} occured.".format(url, str(type(e)))
-        return http.respond_with_error(self, 500, msg)
+        return httpd.respond_with_error(500, msg)
+    finally: 
+        f.close()
 
     try:
         img = Image.open('/tmp/rasta_tmp')
         img.close()
     except IOError:
         msg = "Url does not point to a supported image file."
-        return httpd.respond_with_user_error(3, msg)
+        return httpd.respond_with_user_error(4, msg)
+
+    # making prediction
 
     pred,pcts = get_pred(model, '/tmp/rasta_tmp', IS_DECAF, K)
-
+    
     pcts = [ str(i) for i in pcts ]
     resp = { 'pred' : pred, 'pcts' : pcts, 'k' : K }
 
