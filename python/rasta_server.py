@@ -5,7 +5,7 @@ import subprocess
 import json
 from urllib.error import URLError
 from urllib.request import urlopen
-from urllib.parse import unquote, urlparse, parse_qs
+from urllib.parse import unquote, quote, urlparse, parse_qs, urlunparse
 from PIL import Image
 from os import stat
 from socket import timeout
@@ -39,25 +39,29 @@ def query_predict(httpd, model, query):
         msg = "Error: missing url argument in predict query"
         return httpd.respond_with_error(422, msg)
 
-    url = query['url'][0]
-
+    # quote the path of the image url because urlopen does not accept utf-8 paths (afaii)
+    imgurl = urlparse(query['url'][0])
+    imgurl = urlunparse((imgurl.scheme, imgurl.netloc,
+                         quote(imgurl.path), imgurl.params,
+                         imgurl.query, imgurl.fragment))
+                            
     ressource = None
 
     # check URL
 
     try:
-        ressource = urlopen(url, timeout=TIMEOUT)
+        ressource = urlopen(imgurl, timeout=TIMEOUT)
     except URLError as err:
-        msg = "Cannot access ressource at url '{}': {}.".format(url, err.reason) 
+        msg = "Cannot access ressource at url '{}': {}.".format(imgurl, err.reason) 
         return httpd.respond_with_user_error(1, msg)
     except timeout as e:
-        msg = "Cannot access ressource at url '{}'. Timeout.".format(url)
+        msg = "Cannot access ressource at url '{}'. Timeout.".format(imgurl)
         return httpd.respond_with_user_error(22, msg)
     except ValueError as err:
-        msg = "Cannot access ressource at url '{}'. Invalid URL.".format(url, str(type(err))) 
+        msg = "Cannot access ressource at url '{}'. Invalid URL.".format(imgurl, str(type(err))) 
         return httpd.respond_with_user_error(2, msg)
     except Exception as e:
-        msg = "Cannot access ressource at url '{}'. Exception {} occured.".format(url, str(type(e)))
+        msg = "Cannot access ressource at url '{}'. Exception {} occured.".format(imgurl, str(type(e)))
         return httpd.respond_with_error(500, msg)
     
     resinfo = ressource.info()
@@ -65,7 +69,7 @@ def query_predict(httpd, model, query):
     if 'Content-Length' in resinfo:
         # TODO catch non int content-length
         if int(resinfo['Content-Length']) >= MAX_FILE_SIZE:
-            msg = "Cannot download ressource at url '{}': File is too big (Max file size: {}kB).".format(url, MAX_FILE_SIZE / 1024) 
+            msg = "Cannot download ressource at url '{}': File is too big (Max file size: {}kB).".format(imgurl, MAX_FILE_SIZE / 1024) 
             return httpd.respond_with_user_error(3, msg)
 
 
@@ -76,7 +80,7 @@ def query_predict(httpd, model, query):
         f = open('/tmp/rasta_tmp','wb')
         f.write(ressource.read(MAX_FILE_SIZE))
     except Exception as e:
-        msg = "Cannot download ressource at url '{}'. Exception {} occured.".format(url, str(type(e)))
+        msg = "Cannot download ressource at url '{}'. Exception {} occured.".format(imgurl, str(type(e)))
         return httpd.respond_with_error(500, msg)
     finally: 
         f.close()
@@ -120,7 +124,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         print("Sending error: " + msg)
         datastr = json.dumps({ 'error' : err, 'error_msg' : msg }, ensure_ascii=False)
         self.send_response(err)
-        self.send_header("Content-type", 'text/json')
+        self.send_header("Content-type", 'text/json; charset=utf-8')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(datastr.encode("utf-8"))
