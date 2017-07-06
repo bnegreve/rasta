@@ -11,4 +11,4 @@ Theano
 progressbar2
 h5py
 sklearn
-
+keras-vis
