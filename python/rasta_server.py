@@ -102,9 +102,15 @@ a   # see: https://stackoverflow.com/questions/11818362/how-to-deal-with-unicode
     except Exception as e:
         msg = "Cannot load image, please try another image."
         return httpd.respond_with_user_error(5, msg)
-    
+
+    # For some reason the predictions are not always utf-8
+    # and that seem to depend on the locale encoding. (I'm not sure what's going on, really)
+    # This will decode the prediction based on the locale encoding and remove broken chars 
+    # if any. 
     pcts = [ str(i) for i in pcts ]
+    pred = [ bytes(p, sys.getfilesystemencoding(), 'replace').decode('utf-8') for p in pred ]
     resp = { 'pred' : pred, 'pcts' : pcts, 'k' : K }
+
 
     return httpd.respond(resp)
 
