@@ -1,10 +1,13 @@
 from keras.applications.resnet50 import ResNet50
-from keras.layers.pooling import GlobalAveragePooling2D
 from keras.models import Model
 from keras.layers import Dropout
 from keras import backend as K
 from resnet_build import ResnetBuilder
-
+from keras.layers import Input,Activation,Flatten,Conv2D,MaxPooling2D,ZeroPadding2D,AveragePooling2D,GlobalAveragePooling2D,GlobalMaxPooling2D,BatchNormalization
+from keras.layers import Dense
+from keras.engine.topology import get_source_inputs
+from keras.utils.data_utils import get_file
+from keras.applications.resnet50 import identity_block,conv_block
 
 
 def resnet_trained(n_retrain_layers = 0):
@@ -44,14 +47,6 @@ def empty_resnet():
     model = Model(inputs=base_model.input, outputs=features)
     return model
 
-def dropout_resnet(dropout_rate=0.5):
-    K.set_image_data_format('channels_last')
-    base_model = ResNet50(weights=None,include_top=False,input_shape=(224,224,3))
-    features = GlobalAveragePooling2D()(base_model.output)
-    model = Model(inputs=base_model.input, outputs=features)
-    dropout = Dropout(dropout_rate)(model.output)
-    model = Model(inputs=model.input,outputs=dropout)
-    return model
 
 
 def resnet18():
@@ -63,10 +58,111 @@ def resnet101():
 def resnet152():
     return ResnetBuilder.build_resnet_152((3,224,224),25)
 
-def main():
-    model = resnet18()
-    print(model.summary())
 
+
+
+def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, pooling=None, input_shape=(224,224,3),classes=25,dp_rate=0):
+
+
+
+    WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels.h5'
+    WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
+
+    if weights not in {'imagenet', None}:
+        raise ValueError('The `weights` argument should be either '
+                         '`None` (random initialization) or `imagenet` '
+                         '(pre-training on ImageNet).')
+
+    if weights == 'imagenet' and include_top and classes != 1000:
+        raise ValueError('If using `weights` as imagenet with `include_top`'
+                         ' as true, `classes` should be 1000')
+
+    # Determine proper input shape
+    #input_shape = _obtain_input_shape(input_shape,default_size=224,min_size=197,data_format=K.image_data_format(),include_top=include_top)
+
+    if input_tensor is None:
+        img_input = Input(shape=input_shape)
+    else:
+        if not K.is_keras_tensor(input_tensor):
+            img_input = Input(tensor=input_tensor, shape=input_shape)
+        else:
+            img_input = input_tensor
+    if K.image_data_format() == 'channels_last':
+        bn_axis = 3
+    else:
+        bn_axis = 1
+
+    x = ZeroPadding2D((3, 3))(img_input)
+    x = Conv2D(64, (7, 7), strides=(2, 2), name='conv1')(x)
+    x = BatchNormalization(axis=bn_axis, name='bn_conv1')(x)
+    x = Activation('relu')(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+
+    x = conv_block(x, 3, [64, 64, 256], stage=2, block='a', strides=(1, 1))
+    x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
+    x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
+
+    x = Dropout(dp_rate)(x)
+
+    x = conv_block(x, 3, [128, 128, 512], stage=3, block='a')
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
+
+    x = Dropout(dp_rate)(x)
+
+    x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='c')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='d')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
+
+    x = Dropout(dp_rate)(x)
+
+    x = conv_block(x, 3, [512, 512, 2048], stage=5, block='a')
+    x = identity_block(x, 3, [512, 512, 2048], stage=5, block='b')
+    x = identity_block(x, 3, [512, 512, 2048], stage=5, block='c')
+
+    x = Dropout(dp_rate)(x)
+
+    x = AveragePooling2D((7, 7), name='avg_pool')(x)
+
+    if include_top:
+        x = Flatten()(x)
+        x = Dense(classes, activation='softmax', name='fc1000')(x)
+    else:
+        if pooling == 'avg':
+            x = GlobalAveragePooling2D()(x)
+        elif pooling == 'max':
+            x = GlobalMaxPooling2D()(x)
+
+    # Ensure that the model takes into account
+    # any potential predecessors of `input_tensor`.
+    if input_tensor is not None:
+        inputs = get_source_inputs(input_tensor)
+    else:
+        inputs = img_input
+    # Create model.
+    model = Model(inputs, x, name='resnet50')
+
+    # load weights
+    if weights == 'imagenet':
+        if include_top:
+            weights_path = get_file('resnet50_weights_tf_dim_ordering_tf_kernels.h5',
+                                    WEIGHTS_PATH,
+                                    cache_subdir='models',
+                                    md5_hash='a7b3fe01876f51b976af0dea6bc144eb')
+        else:
+            weights_path = get_file('resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5',
+                                    WEIGHTS_PATH_NO_TOP,
+                                    cache_subdir='models',
+                                    md5_hash='a268eb855778b3df3c7506639542a6af')
+        model.load_weights(weights_path)
+
+    return model
 
 if __name__ == '__main__':
-    main()
+    model = resnet_dropout(dp_rate=0.5)
+    print(len(model.layers))
+

@@ -171,7 +171,7 @@ def init(model_path, is_decaf6=False):
 def get_pred(model, image_path, is_decaf6=False, top_k=1):
 
     img = image.open(image_path)
-    img = img.resize((227, 227))
+    img = img.resize((224, 224))
     img_np = np.asarray(img, dtype='uint8')
     img_np = np.divide(img_np, 255)
     x = img_np[..., np.newaxis]
@@ -228,7 +228,8 @@ def get_per_class_accuracy(labels,preds):
                 if (preds[i] == value):
                     s = s + 1
         names.append(inv_dico.get(value))
-        accs.append(s / n * 100, )
+        accs.append(s / n * 100,)
+    return accs,names
 
 if __name__ == '__main__':
     main()
