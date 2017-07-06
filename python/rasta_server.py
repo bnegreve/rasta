@@ -39,12 +39,16 @@ def query_predict(httpd, model, query):
         msg = "Error: missing url argument in predict query"
         return httpd.respond_with_error(422, msg)
 
-    # quote the path of the image url because urlopen does not accept utf-8 paths (afaii)
-    imgurl = urlparse(query['url'][0])
-    imgurl = urlunparse((imgurl.scheme, imgurl.netloc,
-                         quote(imgurl.path), imgurl.params,
-                         imgurl.query, imgurl.fragment))
-                            
+    # urlopen does not seem to accept utf-8 paths, so decode the ascii
+    # encoded-url, ascii encode the path part and reform the url
+a   # see: https://stackoverflow.com/questions/11818362/how-to-deal-with-unicode-string-in-url-in-python3
+    imgurl = unquote(query['url'][0])                       # decode ascii encoded url to utf-8
+    imgurl = urlparse(imgurl)                               # break url appart
+    imgurl = urlunparse((imgurl.scheme, imgurl.netloc,      # ascii encode path and rebuild url
+                        quote(imgurl.path), imgurl.params,
+                        imgurl.query, imgurl.fragment))
+
+
     ressource = None
 
     # check URL
