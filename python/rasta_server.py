@@ -29,7 +29,8 @@ USER_AGENT_STRING="Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firef
 
 
 model = None
- 
+cache = {}
+
 # #dummy functs (just for testing without having to load the model)
 # def get_pred(a,b,c,d):
 #     return ([], [])
@@ -58,9 +59,16 @@ def query_predict(httpd, model, query):
 
     ressource = None
 
-    # check URL
+    # check URL 
+
+    global cache
+    if imgurl in cache:
+        resp = cache[imgurl]
+        httpd.log_message('CACHE-HIT: %s %s', imgurl, str(resp))
+        return httpd.respond(resp)
 
     try:
+#        req = Request(imgurl, {}, {'User-agent' : USER_AGENT_STRING})
         ressource = urlopen(imgurl, timeout=TIMEOUT)
     except URLError as err:
         msg = "Cannot access ressource at url '{}': {}.".format(imgurl, err.reason) 
@@ -118,7 +126,10 @@ def query_predict(httpd, model, query):
     pred = [ bytes(p, sys.getfilesystemencoding(), 'replace').decode('utf-8') for p in pred ]
     resp = { 'pred' : pred, 'pcts' : pcts, 'k' : K }
 
-
+                      
+    cache[imgurl] = resp
+    
+                      
     return httpd.respond(resp)
 
 class Handler(http.server.BaseHTTPRequestHandler):
