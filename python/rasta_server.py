@@ -13,9 +13,10 @@ from urllib.error import URLError
 from urllib.request import urlopen
 from urllib.parse import unquote, quote, urlparse, parse_qs, urlunparse
 from PIL import Image
-from os import stat
 from socket import timeout
 from evaluation import get_pred, init
+from datetime import datetime
+import pathlib
 
 PORT = 4000
 
@@ -183,6 +184,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         return 0
 
 
+def create_log_file(path):
+    pathlib.Path(path).mkdir(parents=True, exist_ok=True) 
+    return path + '/rasta_log_'+datetime.now().strftime('%F-%H-%M-%S')
+
 def main():
     httpd = socketserver.TCPServer(("", PORT), Handler)
 
@@ -191,7 +196,11 @@ def main():
 
     print("serving at port", PORT)
 
-    sys.stderr = open('rasta.log', 'w')
+    logfilename = create_log_file('./log')
+    sys.stderr = open(logfilename, 'w')
+    print("logs are in " + logfilename)
+
+
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
