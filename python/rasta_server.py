@@ -47,7 +47,7 @@ def query_predict(httpd, model, query):
 
     # urlopen does not seem to accept utf-8 paths, so decode the ascii
     # encoded-url, ascii encode the path part and reform the url
-a   # see: https://stackoverflow.com/questions/11818362/how-to-deal-with-unicode-string-in-url-in-python3
+    # see: https://stackoverflow.com/questions/11818362/how-to-deal-with-unicode-string-in-url-in-python3
     imgurl = unquote(query['url'][0])                       # decode ascii encoded url to utf-8
     imgurl = urlparse(imgurl)                               # break url appart
     imgurl = urlunparse((imgurl.scheme, imgurl.netloc,      # ascii encode path and rebuild url
