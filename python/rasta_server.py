@@ -177,6 +177,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         global model
         result = Handler.query_dispatcher[ qtype ] ( self, model, query )
 
+        sys.stderr.flush()
+        return 0
+
 
 def main():
     httpd = socketserver.TCPServer(("", PORT), Handler)
