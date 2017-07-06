@@ -10,7 +10,7 @@ import sys
 import subprocess
 import json
 from urllib.error import URLError
-from urllib.request import urlopen, Request
+from urllib.request import urlopen
 from urllib.parse import unquote, quote, urlparse, parse_qs, urlunparse
 from PIL import Image
 from socket import timeout
@@ -25,7 +25,8 @@ IS_DECAF = False
 K = 3
 TIMEOUT=10
 MAX_FILE_SIZE=10 * 1024 * 1024 # 10 MB
-USER_AGENT_STRING='Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'
+USER_AGENT_STRING="Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0"
+
 
 model = None
 cache = {}
@@ -67,8 +68,8 @@ def query_predict(httpd, model, query):
         return httpd.respond(resp)
 
     try:
-        req = Request(imgurl, None, headers={'User-Agent' : USER_AGENT_STRING})
-        ressource = urlopen(req, timeout=TIMEOUT)
+#        req = Request(imgurl, {}, {'User-agent' : USER_AGENT_STRING})
+        ressource = urlopen(imgurl, timeout=TIMEOUT)
     except URLError as err:
         msg = "Cannot access ressource at url '{}': {}.".format(imgurl, err.reason) 
         return httpd.respond_with_user_error(1, msg)
