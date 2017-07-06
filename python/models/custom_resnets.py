@@ -61,7 +61,7 @@ def resnet152():
 
 
 
-def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, pooling=None, input_shape=(224,224,3),classes=25,dp_rate=0):
+def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, pooling='avg', input_shape=(224,224,3),classes=25,dp_rate=0,n_retrain_layers=0):
 
 
 
@@ -159,6 +159,12 @@ def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, p
                                     cache_subdir='models',
                                     md5_hash='a268eb855778b3df3c7506639542a6af')
         model.load_weights(weights_path)
+
+    split_value = len(model.layers) + 1 - n_retrain_layers
+    for layer in model.layers[:split_value]:
+        layer.trainable = False
+    for layer in model.layers[split_value:]:
+        layer.trainable = True
 
     return model
 
