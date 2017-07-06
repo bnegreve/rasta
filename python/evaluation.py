@@ -29,8 +29,8 @@ def main():
     parser.add_argument('--data_path', action="store",
                         default=join(PATH, '../data/wikipaintings_10/wikipaintings_test'), dest='data_path',
                         help='Path of the data (image or train folder)')
-    parser.add_argument('--model_path', action="store", default=None, dest='model_path',
-                        help='Path of the h5 model file')
+    parser.add_argument('--model_path', action="store", dest='model_path',
+                        help='Path of the h5 model file',required=True)
     parser.add_argument('-j', action="store_true", dest='json', help='Output prediction as json')
     parser.add_argument('-s', action="store_true", dest='save', help='Save accuracy in results file')
     parser.add_argument('-b', action="store_true", dest='b', help='Sets bagging')
@@ -46,32 +46,30 @@ def main():
     k = (str(args.k)).split(",")
     k = [int(val) for val in k]
     print(k)
-    if model_path == None:
-        print('Please run providing argument --model_path')
-    else:
-        if eval_type == 'acc':
-            preds = get_top_multi_acc(model_path, data_path,top_k=k,bagging=args.b)
-            for val,pred in zip(k,preds):
-                print('\nTop-{} accuracy : {}%'.format(val,pred*100))
 
-            if args.save and k==[1,3,5]:
-                model_name = model_path.split('/')[-2]
-                print(model_name)
-                with open(RESULT_FILE_PATH,'a') as f:
-                       f.write('\n'+model_name+";"+str(preds[0])+";"+str(preds[1])+";"+str(preds[2])+';'+str(datetime.now()))
+    if eval_type == 'acc':
+        preds = get_top_multi_acc(model_path, data_path,top_k=k,bagging=args.b)
+        for val,pred in zip(k,preds):
+            print('\nTop-{} accuracy : {}%'.format(val,pred*100))
 
-        elif eval_type == 'pred':
-            k = k[0]
-            model = init(model_path, isdecaf)
-            pred,pcts = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k)
-            print(pcts)
-            if args.json:
-                result = { 'pred' : pred, 'k' : k }
-                print(json.dumps(result))
-            else:
-                print("Top-{} prediction : {}".format(k, pred))
+        if args.save and k==[1,3,5]:
+            model_name = model_path.split('/')[-2]
+            print(model_name)
+            with open(RESULT_FILE_PATH,'a') as f:
+                   f.write('\n'+model_name+";"+str(preds[0])+";"+str(preds[1])+";"+str(preds[2])+';'+str(datetime.now()))
+
+    elif eval_type == 'pred':
+        k = k[0]
+        model = init(model_path, isdecaf)
+        pred,pcts = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k)
+        print(pcts)
+        if args.json:
+            result = { 'pred' : pred, 'k' : k }
+            print(json.dumps(result))
         else:
-            print('Error in arguments. Please try with -h')
+            print("Top-{} prediction : {}".format(k, pred))
+    else:
+        print('Error in arguments. Please try with -h')
 
 
 def get_dico():
