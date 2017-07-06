@@ -124,31 +124,33 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     query_dispatcher = { 'predict' : query_predict }
 
-    def respond(self, data):
-        data['error'] = 200
+
+    def respond_raw(self, code, data):
+        data['error'] = code
         datastr = json.dumps(data, ensure_ascii=False)
         self.send_response(data['error'])
         self.send_header("Content-type", 'text/json; charset=utf-8')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(datastr.encode('utf-8'))
-        print("Response ({}): ".format(datastr).encode('utf-8'));
-        return 200
+#        print("Response ({}): ".format(datastr).encode('utf-8'));
+        return code
 	
+    def respond(self, data):
+        self.respond_raw(200, data)
+        self.log_message('RESPONSE: %s', str(data))
+        return 200
+
     def respond_with_error(self, err, msg):
-        print("Sending error: " + msg)
-        datastr = json.dumps({ 'error' : err, 'error_msg' : msg }, ensure_ascii=False)
-        self.send_response(err)
-        self.send_header("Content-type", 'text/json; charset=utf-8')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(datastr.encode("utf-8"))
-        print("Response (Error!: {}): {}".format(err, datastr.encode("utf-8")))
+        data = { 'error' : err, 'error_msg' : msg }
+        self.respond_raw(err, data)
+        self.log_error('ERROR %s: %s', str(err), msg) 
         return err
 
     def respond_with_user_error(self, user_err_code, user_err_msg):
         resp = {"user_error": user_err_code,
                 "user_error_msg": user_err_msg }
+        self.log_message('USER-ERROR %s: %s', str(user_err_code), user_err_msg) 
         return self.respond(resp)
 
     def do_GET(self):
