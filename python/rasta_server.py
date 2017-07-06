@@ -1,3 +1,9 @@
+# rasta_server.py
+#
+# before running, make sure your locale is set to some UTF8 locale
+# e.g. with export LANG=C.UTF-8
+#
+
 import http.server
 import socketserver
 import sys
