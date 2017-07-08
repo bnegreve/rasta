@@ -167,9 +167,10 @@ def init(model_path, is_decaf6=False):
     return model 
 
 def get_pred(model, image_path, is_decaf6=False, top_k=1):
-
     img = image.open(image_path)
     img = img.resize((224, 224))
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
     img_np = np.asarray(img, dtype='uint8')
     img_np = np.divide(img_np, 255)
     x = img_np[..., np.newaxis]
