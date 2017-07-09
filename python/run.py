@@ -1,6 +1,7 @@
 from models.alexnet import decaf
 from models.processing import train_model_from_directory
 from models.custom_resnets import *
+from models.inceptionV4 import inception_v4
 from keras.layers import Dense
 from keras.models import Model
 from keras import backend as K
@@ -77,6 +78,20 @@ elif model_name =='resnet':
     base_model = resnet_trained(n_layers_trainable)
     predictions = Dense(25, activation='softmax')(base_model.output)
     model = Model(inputs=base_model.input, outputs=predictions)
+
+elif model_name =='inception':
+    K.set_image_data_format('channels_last')
+    size = (224,224)
+
+    base_model = inception(n_layers_trainable)
+    predictions = Dense(25, activation='softmax')(base_model.output)
+    model = Model(inputs=base_model.input, outputs=predictions)
+
+elif model_name =='inceptionv4':
+    K.set_image_data_format('channels_last')
+    size = (299,299)
+    model = inception_v4()
+
 
 elif model_name=='resnet2':
     K.set_image_data_format('channels_last')

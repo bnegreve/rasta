@@ -9,6 +9,15 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import TensorBoard,EarlyStopping,ModelCheckpoint
 
 
+def preprocess_input(x):
+    # 'RGB'->'BGR'
+    x = x[:, :, ::-1]
+    # Zero-center by mean pixel
+    x[:, :, 0] -= 103.939
+    x[:, :, 1] -= 116.779
+    x[:, :, 2] -= 123.68
+    return x
+
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
 
@@ -39,8 +48,8 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
     _presaving(model,MODEL_DIR,params)
 
     # Training
-    train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = horizontal_flip)
-    test_datagen = ImageDataGenerator(rescale=1./255)
+    train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = horizontal_flip,preprocessing_function=preprocess_input)
+    test_datagen = ImageDataGenerator(rescale=1./255,preprocessing_function=preprocess_input)
     train_generator = train_datagen.flow_from_directory(directory_path, target_size = target_size, batch_size = batch_size, class_mode='categorical')
     tbCallBack = TensorBoard(log_dir=MODEL_DIR, histogram_freq=0, write_graph=True, write_images=True)
     if validation_path!=None:

@@ -1,4 +1,4 @@
-from keras.applications.resnet50 import ResNet50
+from keras.applications import ResNet50,InceptionV3
 from keras.models import Model
 from keras.layers import Dropout
 from keras import backend as K
@@ -22,6 +22,17 @@ def resnet_trained(n_retrain_layers = 0):
         layer.trainable = True
     return model
 
+def inception(n_retrain_layers = 0):
+    K.set_image_data_format('channels_last')
+    base_model = InceptionV3(include_top=False, input_shape=(224, 224, 3))
+    features = GlobalAveragePooling2D()(base_model.output)
+    model = Model(inputs=base_model.input, outputs=features)
+    split_value = len(base_model.layers) + 1 - n_retrain_layers
+    for layer in model.layers[:split_value]:
+        layer.trainable = False
+    for layer in model.layers[split_value:]:
+        layer.trainable = True
+    return model
 
 def resnet_trained_2(n_retrain_layers = 0):
     K.set_image_data_format('channels_last')
@@ -167,6 +178,8 @@ def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, p
         layer.trainable = True
 
     return model
+
+
 
 if __name__ == '__main__':
     model = resnet_dropout(dp_rate=0.5)
