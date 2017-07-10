@@ -43,7 +43,6 @@ def resnet_trained_2(n_retrain_layers = 0):
         layer.set_weights(w)
     return model
 
-
 def empty_resnet():
     K.set_image_data_format('channels_last')
     base_model = ResNet50(weights=None,include_top=False,input_shape=(224,224,3))
@@ -106,8 +105,6 @@ def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, p
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
 
-    x = Dropout(dp_rate)(x)
-
     x = conv_block(x, 3, [128, 128, 512], stage=3, block='a')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
@@ -128,7 +125,6 @@ def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, p
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='b')
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='c')
 
-    x = Dropout(dp_rate)(x)
 
     x = AveragePooling2D((7, 7), name='avg_pool')(x)
 
