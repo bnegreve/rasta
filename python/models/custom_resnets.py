@@ -15,23 +15,16 @@ def resnet_trained(n_retrain_layers = 0):
     base_model = ResNet50(include_top=False,input_shape=(224,224,3))
     features = GlobalAveragePooling2D()(base_model.output)
     model = Model(inputs=base_model.input, outputs=features)
-    split_value = len(base_model.layers)+1-n_retrain_layers
-    for layer in model.layers[:split_value]:
-        layer.trainable=False
-    for layer in model.layers[split_value:]:
-        layer.trainable = True
+    model = _set_n_retrain(model,n_retrain_layers)
     return model
+
 
 def inception(n_retrain_layers = 0):
     K.set_image_data_format('channels_last')
     base_model = InceptionV3(include_top=False, input_shape=(224, 224, 3))
     features = GlobalAveragePooling2D()(base_model.output)
     model = Model(inputs=base_model.input, outputs=features)
-    split_value = len(base_model.layers) + 1 - n_retrain_layers
-    for layer in model.layers[:split_value]:
-        layer.trainable = False
-    for layer in model.layers[split_value:]:
-        layer.trainable = True
+    model = _set_n_retrain(model,n_retrain_layers)
     return model
 
 def resnet_trained_2(n_retrain_layers = 0):
@@ -72,7 +65,7 @@ def resnet152():
 
 
 
-def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, pooling='avg', input_shape=(224,224,3),classes=25,dp_rate=0,n_retrain_layers=0):
+def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, pooling='avg', input_shape=(224,224,3),classes=25,dp_rate=0.,n_retrain_layers=0):
 
 
 
@@ -179,9 +172,30 @@ def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, p
 
     return model
 
+def _get_weighted_layers(model):
+    res=[]
+    for layer in model.layers:
+        if len(layer.get_weights()) != 0:
+            res.append(layer.name)
+    return res
+
+def _set_n_retrain(model,n):
+    w_layers = _get_weighted_layers(model)
+    if n > len(w_layers):
+        n == len(w_layers)
+    if n>0:
+        for layer in model.layers:
+            if layer.name in w_layers[-n:]:
+                layer.trainable = True
+            else:
+                layer.trainable = False
+    else :
+        for layer in model.layers:
+            layer.trainable = False
+    return model
 
 
 if __name__ == '__main__':
-    model = resnet_dropout(dp_rate=0.5)
-    print(len(model.layers))
+    model = resnet_trained(1)
+    print(model.summary())
 

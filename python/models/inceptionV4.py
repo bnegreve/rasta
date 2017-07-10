@@ -251,7 +251,7 @@ def inception_v4(num_classes=25, dropout_keep_prob=0.5, weights='imagenet', incl
         x = Dropout(dropout_keep_prob)(x)
         x = Flatten()(x)
         # 1536
-        x = Dense(units=num_classes, activation='softmax')(x)
+        x = Dense(units=num_classes, activation='softmax',name='custom_dense')(x)
 
     model = Model(inputs, x, name='inception_v4')
 
@@ -283,5 +283,3 @@ def inception_v4(num_classes=25, dropout_keep_prob=0.5, weights='imagenet', incl
     return model
 
 
-def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=True):
-    return inception_v4(num_classes, dropout_prob, weights, include_top)
