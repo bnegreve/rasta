@@ -6,10 +6,10 @@ import sys
 import pickle
 import pydot
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import TensorBoard,EarlyStopping,ModelCheckpoint
+from keras.callbacks import TensorBoard,ModelCheckpoint
 
 
-def preprocess_input(x):
+def imagenet_preprocess_input(x):
     # 'RGB'->'BGR'
     x = x[:, :, ::-1]
     # Zero-center by mean pixel
@@ -18,10 +18,12 @@ def preprocess_input(x):
     x[:, :, 2] -= 123.68
     return x
 
+
+
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
 
-def train_model_from_directory(directory_path,model,model_name ='model',target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None,params=None):
+def train_model_from_directory(directory_path,model,model_name ='model',target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None,params=None,preprocessing=False,centering = False):
 
     # Naming and creating folder
     now = datetime.datetime.now()
@@ -47,9 +49,14 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
 
     _presaving(model,MODEL_DIR,params)
 
+    preprocessing_fc =None
+    if preprocessing:
+        preprocessing_fc = imagenet_preprocess_input
+
+
     # Training
-    train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = horizontal_flip,preprocessing_function=preprocess_input)
-    test_datagen = ImageDataGenerator(rescale=1./255,preprocessing_function=preprocess_input)
+    train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc,featurewise_center=centering)
+    test_datagen = ImageDataGenerator(rescale=1./255,preprocessing_function=preprocessing_fc)
     train_generator = train_datagen.flow_from_directory(directory_path, target_size = target_size, batch_size = batch_size, class_mode='categorical')
     tbCallBack = TensorBoard(log_dir=MODEL_DIR, histogram_freq=0, write_graph=True, write_images=True)
     if validation_path!=None:

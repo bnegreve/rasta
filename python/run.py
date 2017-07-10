@@ -22,8 +22,8 @@ parser.add_argument('-e', action="store",default=10,type=int,dest='epochs',help=
 parser.add_argument('-f', action="store", default=False, type=bool,dest='horizontal_flip',help='Set horizontal flip or not [True|False]')
 parser.add_argument('-n', action="store", default=0, type=int,dest='n_layers_trainable',help='Set the number of last trainable layers')
 parser.add_argument('-d', action="store", default=0, type=float,dest='dropout_rate',help='Set the dropout_rate')
-parser.add_argument('-p', action="store_true", type=bool,dest='preprocessing',help='Set imagenet preprocessing or not')
-parser.add_argument('-c', action="store_true", type=bool,dest='centering',help='Set centering or not')
+parser.add_argument('-p', action="store_true",dest='preprocessing',help='Set imagenet preprocessing or not')
+parser.add_argument('-c', action="store_true",dest='centering',help='Set centering or not')
 
 parser.add_argument('--multi_gpu', action="store", default=False, type=bool,dest='multi_gpu',help='Enable multi_gpu')
 parser.add_argument('--train_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_train'),dest='training_path',help='Path of the training data directory')
