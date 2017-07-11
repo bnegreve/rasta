@@ -129,13 +129,13 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1,bagging = Fal
 
 
 def _bagging_predict(x,model):
-    x_flip = x.transpose(x.FLIP_LEFT_RIGHT)
+    x_flip = np.fliplr(x)
     x = imagenet_preprocess_input(x)
     x *= 1. / 255
     x_flip = imagenet_preprocess_input(x_flip)
     x_flip *= 1. / 255
-    pred = model.predict(x)
-    pred_flip = model.predict(x_flip)
+    pred = model.predict(x[np.newaxis,...])
+    pred_flip = model.predict(x_flip[np.newaxis,...])
     avg = np.mean(np.array([pred,pred_flip]), axis=0 )
     return avg
 
