@@ -1,14 +1,12 @@
 from keras import backend as K
 from keras.models import load_model
 from keras.applications import ResNet50,imagenet_utils
-from keras.preprocessing.image import img_to_array
 from evaluation import get_dico
 from keras.layers.convolutional import _Conv
 import argparse
 import os
 from os.path import join
 import numpy as np
-from matplotlib import pyplot as plt
 from vis.visualization import visualize_cam,overlay,visualize_saliency,visualize_activation
 from vis.utils import utils
 from keras import activations
@@ -17,6 +15,7 @@ from keras.applications.resnet50 import preprocess_input
 from vis.visualization import get_num_filters
 import matplotlib
 matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 
 
 
