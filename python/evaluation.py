@@ -14,6 +14,8 @@ from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 import json
 from datetime import datetime
+from keras.preprocessing.image import load_img,img_to_array
+from utils.utils import imagenet_preprocess_input,get_dico
 
 def main():
     PATH = os.path.dirname(__file__)
@@ -72,17 +74,6 @@ def main():
         print('Error in arguments. Please try with -h')
 
 
-def get_dico():
-    classes = []
-    PATH = os.path.dirname(__file__)
-    directory = join(PATH,'../data/wikipaintings_10/wikipaintings_train')
-    for subdir in sorted(os.listdir(directory)):
-        if os.path.isdir(os.path.join(directory, subdir)):
-            classes.append(subdir)
-    class_indices = dict(zip(classes, range(len(classes))))
-    return class_indices
-
-
 def get_test_accuracy(model_path, test_data_path, is_decaf6=False,top_k=1,bagging = False):
     y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6,top_k=top_k,bagging=bagging)
     score = 0
@@ -120,12 +111,14 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1,bagging = Fal
         img_names = os.listdir(style_path)
         label = dico.get(style_name)
         for img_name in img_names:
-            img = image.open(join(style_path, img_name))
+            img = load_img(join(style_path, img_name),target_size=(224,224))
+            x = img_to_array(img)
             if bagging:
-                pred = _bagging_predict(img,model)
+                pred = _bagging_predict(x,model)
             else :
-                x = _preprocess_img(img,is_decaf6=is_decaf6)
-                pred = model.predict(x)
+                x = imagenet_preprocess_input(x)
+                x *= 1./255
+                pred = model.predict(x[np.newaxis,...])
             args_sorted = np.argsort(pred)[0][::-1]
             y.append(label)
             y_pred.append([a for a in args_sorted[:top_k]])
@@ -133,25 +126,18 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1,bagging = Fal
             bar.update(i)
     return np.asarray(y_pred), y
 
-def _bagging_predict(img,model):
-    img_flip = img.transpose(image.FLIP_LEFT_RIGHT)
-    x = _preprocess_img(img)
-    x_flip = _preprocess_img(img_flip)
+
+
+def _bagging_predict(x,model):
+    x_flip = x.transpose(x.FLIP_LEFT_RIGHT)
+    x = imagenet_preprocess_input(x)
+    x *= 1. / 255
+    x_flip = imagenet_preprocess_input(x_flip)
+    x_flip *= 1. / 255
     pred = model.predict(x)
     pred_flip = model.predict(x_flip)
     avg = np.mean(np.array([pred,pred_flip]), axis=0 )
     return avg
-
-def _preprocess_img(img,is_decaf6=False):
-    img = img.resize((224, 224))
-    img_np = np.asarray(img, dtype='uint8')
-    img_np = np.divide(img_np, 255)
-    x = img_np[..., np.newaxis]
-    x = x.transpose(3, 0, 1, 2)
-    if is_decaf6:
-        x = x.transpose(0, 3, 2, 1)
-    return x
-
 
 def init(model_path, is_decaf6=False):
     if is_decaf6:

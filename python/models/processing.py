@@ -4,21 +4,11 @@ import os,datetime
 from os.path import join
 import sys
 import pickle
-import pydot
+import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import TensorBoard,ModelCheckpoint
-
-
-def imagenet_preprocess_input(x):
-    # 'RGB'->'BGR'
-    x = x[:, :, ::-1]
-    # Zero-center by mean pixel
-    x[:, :, 0] -= 103.939
-    x[:, :, 1] -= 116.779
-    x[:, :, 2] -= 123.68
-    return x
-
-
+from keras.preprocessing.image import load_img
+from ..utils.utils import imagenet_preprocess_input,wp_preprocess_input
 
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
@@ -101,13 +91,28 @@ def _presaving(model,model_dir,params):
 
 def _postsaving(model,history,model_dir):
     model.save_weights(join(model_dir,'my_model_weights.h5'))
-    model.save(join(model_dir,'model.h5'))
+    model.save(join(model_dir,'final_model.h5'))
     with open(join(model_dir,'history.pck'), 'wb') as f:
         pickle.dump(history.history, f)
         f.close()
+
 
 def count_files(folder):
     s = 0
     for t in list(os.walk(folder)):
         s += len(t[2])
     return s
+
+
+if __name__=='__main__':
+    DATA_PATH = join(PATH,'../../data/wikipaintings/wikipaintings_train')
+    s = np.array([0.,0.,0.])
+    t=0
+    for folder in os.listdir(DATA_PATH):
+        print("processing ",folder)
+        for file in os.listdir(join(DATA_PATH,folder)):
+            x = load_img(join(DATA_PATH,folder,file),target_size=(224,224))
+            s += np.mean(x,axis=(0,1))
+            t +=1
+    mean = s/t
+    print(mean)
