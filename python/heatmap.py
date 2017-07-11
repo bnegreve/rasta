@@ -15,6 +15,8 @@ from keras import activations
 from keras.preprocessing import image
 from keras.applications.resnet50 import preprocess_input
 from vis.visualization import get_num_filters
+import matplotlib
+matplotlib.use('Agg')
 
 
 
