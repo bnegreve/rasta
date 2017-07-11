@@ -137,6 +137,10 @@ elif model_name=='resnet_152':
     size = (224, 224)
     K.set_image_data_format('channels_last')
     model =  resnet18()
+elif model_name == 'custom_resnet':
+    size = (224, 224)
+    K.set_image_data_format('channels_last')
+    model = custom_resnet()
 
 if multi_gpu:
     model = to_multi_gpu(model)

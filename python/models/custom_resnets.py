@@ -62,7 +62,71 @@ def resnet152():
     return ResnetBuilder.build_resnet_152((3,224,224),25)
 
 
+def custom_resnet(n=0):
 
+
+    WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels.h5'
+    WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
+
+    # Determine proper input shape
+    #input_shape = _obtain_input_shape(input_shape,default_size=224,min_size=197,data_format=K.image_data_format(),include_top=include_top)
+
+    img_input = Input(shape=(224,224,3))
+
+    if K.image_data_format() == 'channels_last':
+        bn_axis = 3
+    else:
+        bn_axis = 1
+
+    x = ZeroPadding2D((3, 3))(img_input)
+    x = Conv2D(64, (7, 7), strides=(2, 2), name='conv1')(x)
+    x = BatchNormalization(axis=bn_axis, name='bn_conv1')(x)
+    x = Activation('relu')(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+
+    x = conv_block(x, 3, [64, 64, 256], stage=2, block='a', strides=(1, 1))
+    x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
+    x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
+
+    x = conv_block(x, 3, [128, 128, 512], stage=3, block='a')
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
+
+
+    x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='c')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='d')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
+
+    x = AveragePooling2D((7, 7), name='avg_pool')(x)
+
+    x = Flatten()(x)
+    x = Dense(25, activation='softmax', name='fc1000')(x)
+    # Ensure that the model takes into account
+    # any potential predecessors of `input_tensor`.
+
+    inputs = img_input
+    # Create model.
+    model = Model(inputs, x, name='resnet50')
+
+    # load weights
+
+    weights_path = get_file('resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5',
+                            WEIGHTS_PATH_NO_TOP,
+                            cache_subdir='models',
+                            md5_hash='a268eb855778b3df3c7506639542a6af')
+    model.load_weights(weights_path,by_name=True)
+
+    split_value = True # len(model.layers) + 1 - n
+    for layer in model.layers[:split_value]:
+        layer.trainable = False
+    for layer in model.layers[split_value:]:
+        layer.trainable = True
+
+    return model
 
 def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, pooling='avg', input_shape=(224,224,3),classes=25,dp_rate=0.,n_retrain_layers=0):
 
