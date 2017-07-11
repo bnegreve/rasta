@@ -62,7 +62,7 @@ def resnet152():
     return ResnetBuilder.build_resnet_152((3,224,224),25)
 
 
-def custom_resnet(n=0):
+def custom_resnet(n=0,dp_rate=0):
 
 
     WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels.h5'
@@ -88,11 +88,13 @@ def custom_resnet(n=0):
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
 
+
     x = conv_block(x, 3, [128, 128, 512], stage=3, block='a')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
 
+    x = Dropout(dp_rate)(x)
 
     x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
@@ -100,6 +102,8 @@ def custom_resnet(n=0):
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='d')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
+
+    x = Dropout(dp_rate)(x)
 
     x = AveragePooling2D((7, 7), name='avg_pool')(x)
 

@@ -22,8 +22,8 @@ parser.add_argument('-e', action="store",default=10,type=int,dest='epochs',help=
 parser.add_argument('-f', action="store", default=False, type=bool,dest='horizontal_flip',help='Set horizontal flip or not [True|False]')
 parser.add_argument('-n', action="store", default=0, type=int,dest='n_layers_trainable',help='Set the number of last trainable layers')
 parser.add_argument('-d', action="store", default=0, type=float,dest='dropout_rate',help='Set the dropout_rate')
-parser.add_argument('-p', action="store_true",dest='preprocessing',help='Set imagenet preprocessing or not')
-parser.add_argument('-c', action="store_true",dest='centering',help='Set centering or not')
+parser.add_argument('-p', action="store",type=bool,default=False,dest='preprocessing',help='Set imagenet preprocessing or not')
+parser.add_argument('-c', action="store",type=bool,default=False,dest='centering',help='Set centering or not')
 
 parser.add_argument('--multi_gpu', action="store", default=False, type=bool,dest='multi_gpu',help='Enable multi_gpu')
 parser.add_argument('--train_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_train'),dest='training_path',help='Path of the training data directory')
@@ -140,7 +140,7 @@ elif model_name=='resnet_152':
 elif model_name == 'custom_resnet':
     size = (224, 224)
     K.set_image_data_format('channels_last')
-    model = custom_resnet()
+    model = custom_resnet(dp_rate=dropout_rate)
 
 if multi_gpu:
     model = to_multi_gpu(model)

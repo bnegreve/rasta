@@ -1,6 +1,6 @@
-from keras.models import load_model
 from keras import backend as K
-import sys
+from keras.models import load_model
+from keras.applications import ResNet50,imagenet_utils
 from keras.preprocessing.image import img_to_array
 from evaluation import get_dico
 from keras.layers.convolutional import _Conv
@@ -9,9 +9,13 @@ import os
 from os.path import join
 import numpy as np
 from matplotlib import pyplot as plt
-from vis.visualization import visualize_cam,overlay,visualize_saliency
+from vis.visualization import visualize_cam,overlay,visualize_saliency,visualize_activation
 from vis.utils import utils
 from keras import activations
+from keras.preprocessing import image
+from keras.applications.resnet50 import preprocess_input
+from vis.visualization import get_num_filters
+
 
 
 
@@ -25,15 +29,13 @@ class HeatMapper(object):
         self.inv_dico = {v: k for k, v in get_dico().items()}
 
         self.seed_img = utils.load_img(img_path, target_size=(224, 224))
-        x = np.expand_dims(img_to_array(self.seed_img), axis=0)
-        img_np = np.asarray(self.seed_img, dtype='uint8')
-        img_np = np.divide(img_np, 255)
-        x = img_np[..., np.newaxis]
-        x = x.transpose(3, 0, 1, 2)
+        x = image.img_to_array(self.seed_img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
         self.x = x
 
     def summary(self):
-        return self.model.summary
+        return self.model.summary()
 
     def predictions(self):
         return
@@ -54,20 +56,26 @@ class HeatMapper(object):
         pred_class =  np.argmax(self.model.predict(self.x))
         fig = plt.figure()
 
-        for i in range(len(names))[-5:]:
+        for i in range(len(names)):
             name = names[i]
 
             print('Calculating heatmap for ', name)
             penult_layer_idx = utils.find_layer_idx(model, name)
             heatmap = visualize_cam(model, layer_idx, filter_indices=[pred_class], seed_input=self.seed_img,penultimate_layer_idx=penult_layer_idx, backprop_modifier=None)
             sp = fig.add_subplot(6, 9, i + 1)
-            sp.title.set_text(name)
+            sp.set_title(name,fontsize=7)
             sp.imshow(overlay(self.seed_img, heatmap))
+            sp.get_xaxis().set_visible(False)
+            sp.get_yaxis().set_visible(False)
+
         plt.show()
 
     def plot_last_heatmap(self):
         layer_idx = -1
         pred_class =  np.argmax(self.model.predict(self.x))
+        print(pred_class)
+        print(imagenet_utils.decode_predictions(self.model.predict(self.x)))
+
         self.model.layers[layer_idx].activation = activations.linear
         model = utils.apply_modifications(self.model)
         names =[]
@@ -80,6 +88,49 @@ class HeatMapper(object):
         plt.imshow(overlay(self.seed_img, heatmap))
         plt.show()
 
+    def plot_activation(self):
+        layer_idx=-1
+        self.model.layers[layer_idx].activation = activations.linear
+        model = utils.apply_modifications(self.model)
+        fig = plt.figure()
+        for pred_class in range(25)[:1]:
+            print(self.inv_dico.get(pred_class))
+            actmap = visualize_activation(model,layer_idx,filter_indices=pred_class)
+            sp = fig.add_subplot(5, 5, pred_class + 1)
+            sp.imshow(actmap)
+            sp.set_title(self.inv_dico.get(pred_class),fontsize=7)
+            sp.get_xaxis().set_visible(False)
+            sp.get_yaxis().set_visible(False)
+        plt.show()
+
+    def plot_conv_weights(self):
+        cls = _get_conv_layers(self.model)
+        i=0
+        for layer in cls :
+            layer_name = layer.name
+            print("{}/{} : {}".format(i,len(cls),layer_name))
+            layer_idx = utils.find_layer_idx(self.model,layer_name)
+
+            filters = np.arange(get_num_filters(self.model.layers[layer_idx]))
+            vis_images = []
+            for idx in filters:
+                img = visualize_activation(self.model, layer_idx, filter_indices=idx)
+                # Utility to overlay text on image.
+                img = utils.draw_text(img, 'Filter {}'.format(idx))
+                vis_images.append(img)
+            # Generate stitched image palette with 8 cols.
+            stitched = utils.stitch_images(vis_images, cols=8)
+            plt.axis('off')
+            plt.imsave('heatmaps/'+layer_name+'.hm',stitched)
+            i+=1
+
+def _get_conv_layers(model):
+    res = []
+    for layer in model.layers:
+        if  isinstance(layer,_Conv):
+            res.append(layer)
+    return res
+
 if __name__ == '__main__':
     PATH = os.path.dirname(__file__)
     parser = argparse.ArgumentParser(description='Tool to plot the heatmap.')
@@ -88,4 +139,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     hm = HeatMapper(args.model_path, args.data_path)
-    hm.plot_last_heatmap()
+    hm.plot_conv_weights()
