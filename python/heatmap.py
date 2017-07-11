@@ -122,7 +122,7 @@ class HeatMapper(object):
             # Generate stitched image palette with 8 cols.
             stitched = utils.stitch_images(vis_images, cols=8)
             plt.axis('off')
-            plt.imsave('heatmaps/'+layer_name+'.hm',stitched)
+            plt.imsave('heatmaps/'+layer_name+'.jpg',stitched)
             i+=1
 
 def _get_conv_layers(model):
