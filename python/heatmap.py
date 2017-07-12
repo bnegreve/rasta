@@ -97,11 +97,12 @@ class HeatMapper(object):
         for pred_class in range(25)[:1]:
             print(self.inv_dico.get(pred_class))
             actmap = visualize_activation(model,layer_idx,filter_indices=pred_class)
-            sp = fig.add_subplot(5, 5, pred_class + 1)
-            sp.imshow(actmap)
-            sp.set_title(self.inv_dico.get(pred_class),fontsize=7)
-            sp.get_xaxis().set_visible(False)
-            sp.get_yaxis().set_visible(False)
+            plt.imshow(actmap)
+            #sp = fig.add_subplot(5, 5, pred_class + 1)
+            #sp.imshow(actmap)
+            #sp.set_title(self.inv_dico.get(pred_class),fontsize=7)
+            #sp.get_xaxis().set_visible(False)
+            #sp.get_yaxis().set_visible(False)
         plt.show()
 
     def plot_conv_weights(self):
@@ -114,7 +115,7 @@ class HeatMapper(object):
 
             filters = np.arange(get_num_filters(self.model.layers[layer_idx]))
             vis_images = []
-            for idx in filters:
+            for idx in filters[:64]:
                 img = visualize_activation(self.model, layer_idx, filter_indices=idx)
                 # Utility to overlay text on image.
                 img = utils.draw_text(img, 'Filter {}'.format(idx))
@@ -140,4 +141,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     hm = HeatMapper(args.model_path, args.data_path)
-    hm.plot_conv_weights()
+    hm.plot_activation()

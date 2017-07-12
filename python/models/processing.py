@@ -1,4 +1,3 @@
-from keras.utils import plot_model
 from keras.models import load_model
 import os,datetime
 from os.path import join
@@ -8,7 +7,7 @@ import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import TensorBoard,ModelCheckpoint
 from keras.preprocessing.image import load_img
-from ..utils.utils import imagenet_preprocess_input,wp_preprocess_input
+from utils.utils import imagenet_preprocess_input,wp_preprocess_input
 
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
@@ -42,7 +41,8 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
     preprocessing_fc =None
     if preprocessing:
         preprocessing_fc = imagenet_preprocess_input
-
+    elif centering:
+        preprocessing_fc = wp_preprocess_input()
 
     # Training
     train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc,featurewise_center=centering)
