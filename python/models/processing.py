@@ -42,7 +42,7 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
     if preprocessing:
         preprocessing_fc = imagenet_preprocess_input
     elif centering:
-        preprocessing_fc = wp_preprocess_input()
+        preprocessing_fc = wp_preprocess_input
 
     # Training
     train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc,featurewise_center=centering)
