@@ -93,19 +93,18 @@ class HeatMapper(object):
         layer_idx=-1
         self.model.layers[layer_idx].activation = activations.linear
         model = utils.apply_modifications(self.model)
-        fig = plt.figure()
-        for pred_class in range(25)[:1]:
+        for pred_class in range(25)[11:12]:
             print(self.inv_dico.get(pred_class))
             actmap = visualize_activation(model,layer_idx,filter_indices=pred_class)
-            plt.imshow(actmap)
+            plt.imsave('img.jpg',actmap)
             #sp = fig.add_subplot(5, 5, pred_class + 1)
             #sp.imshow(actmap)
             #sp.set_title(self.inv_dico.get(pred_class),fontsize=7)
             #sp.get_xaxis().set_visible(False)
             #sp.get_yaxis().set_visible(False)
-        plt.show()
 
     def plot_conv_weights(self):
+        PATH = os.path.dirname(__file__)
         cls = _get_conv_layers(self.model)
         i=0
         for layer in cls :
@@ -123,7 +122,7 @@ class HeatMapper(object):
             # Generate stitched image palette with 8 cols.
             stitched = utils.stitch_images(vis_images, cols=8)
             plt.axis('off')
-            plt.imsave('heatmaps/'+layer_name+'.jpg',stitched)
+            plt.imsave(join(PATH,'heatmaps/'+layer_name+'.jpg'),stitched)
             i+=1
 
 def _get_conv_layers(model):
@@ -141,4 +140,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     hm = HeatMapper(args.model_path, args.data_path)
-    hm.plot_activation()
+    hm.plot_conv_weights()
