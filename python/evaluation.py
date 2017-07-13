@@ -136,8 +136,6 @@ def _bagging_predict(x,model):
     x_flip *= 1./255
     pred = model.predict(x[np.newaxis,...])
     pred_flip = model.predict(x_flip[np.newaxis,...])
-    print(pred)
-    print(pred_flip)
     avg = np.mean(np.array([pred,pred_flip]), axis=0 )
     return avg
 
@@ -163,7 +161,6 @@ def get_pred(model, image_path, is_decaf6=False, top_k=1,bagging=False):
         x = imagenet_preprocess_input(x)
         x *= 1. / 255
         pred = model.predict(x[np.newaxis, ...])
-    print(pred)
     dico = get_dico()
     inv_dico = {v: k for k, v in dico.items()}
     args_sorted = np.argsort(pred)[0][::-1]
