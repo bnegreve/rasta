@@ -25,9 +25,11 @@ parser.add_argument('-d', action="store", default=0, type=float,dest='dropout_ra
 parser.add_argument('-p', action="store_true",dest='preprocessing',help='Set imagenet preprocessing or not')
 parser.add_argument('-c', action="store_true",dest='centering',help='Set centering or not')
 
-parser.add_argument('--multi_gpu', action="store", default=False, type=bool,dest='multi_gpu',help='Enable multi_gpu')
+parser.add_argument('--distortions', action="store", default=False, type=bool,dest='disto',help='Activate distortions or not')
+
 parser.add_argument('--train_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_train'),dest='training_path',help='Path of the training data directory')
 parser.add_argument('--val_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_val'),dest='validation_path',help='Path of the validation data directory')
+
 
 
 args = parser.parse_args()
@@ -40,7 +42,6 @@ TRAINING_PATH = args.training_path
 VAL_PATH = args.validation_path
 n_layers_trainable = args.n_layers_trainable
 dropout_rate = args.dropout_rate
-multi_gpu = args.multi_gpu
 
 params = vars(args)
 
@@ -142,8 +143,5 @@ elif model_name == 'custom_resnet':
     K.set_image_data_format('channels_last')
     model = custom_resnet(dp_rate=dropout_rate)
 
-if multi_gpu:
-    model = to_multi_gpu(model)
-
 model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
-train_model_from_directory(TRAINING_PATH,model,model_name=model_name,target_size=size,validation_path=VAL_PATH,epochs = epochs,batch_size = batch_size,horizontal_flip=flip,params=params,preprocessing=args.preprocessing,centering=args.centering)
+train_model_from_directory(TRAINING_PATH,model,model_name=model_name,target_size=size,validation_path=VAL_PATH,epochs = epochs,batch_size = batch_size,horizontal_flip=flip,params=params,preprocessing=args.preprocessing,centering=args.centering,distortions=args.disto)
