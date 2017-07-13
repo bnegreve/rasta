@@ -5,7 +5,6 @@ from keras.models import Model
 from models.alexnet import decaf
 from keras import metrics
 import numpy as np
-from PIL import Image as image
 import os
 from os.path import join
 import argparse
@@ -63,7 +62,7 @@ def main():
     elif eval_type == 'pred':
         k = k[0]
         model = init(model_path, isdecaf)
-        pred,pcts = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k)
+        pred,pcts = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k,bagging=args.b)
         print(pcts)
         if args.json:
             result = { 'pred' : pred, 'k' : k }
@@ -129,13 +128,16 @@ def get_y_pred(model_path, test_data_path, is_decaf6=False,top_k=1,bagging = Fal
 
 
 def _bagging_predict(x,model):
-    x_flip = np.fliplr(x)
+    x_flip = np.copy(x)
+    x_flip = np.fliplr(x_flip)
     x = imagenet_preprocess_input(x)
     x *= 1./255
     x_flip = imagenet_preprocess_input(x_flip)
     x_flip *= 1./255
     pred = model.predict(x[np.newaxis,...])
     pred_flip = model.predict(x_flip[np.newaxis,...])
+    print(pred)
+    print(pred_flip)
     avg = np.mean(np.array([pred,pred_flip]), axis=0 )
     return avg
 
@@ -152,18 +154,16 @@ def init(model_path, is_decaf6=False):
                   metrics=['accuracy', metrics.top_k_categorical_accuracy])    
     return model 
 
-def get_pred(model, image_path, is_decaf6=False, top_k=1):
-    img = image.open(image_path)
-    img = img.resize((224, 224))
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-    img_np = np.asarray(img, dtype='uint8')
-    img_np = np.divide(img_np, 255)
-    x = img_np[..., np.newaxis]
-    x = x.transpose(3,0, 1,2)
-    if is_decaf6:
-       x = x.transpose(0, 3, 2, 1)
-    pred = model.predict(x)
+def get_pred(model, image_path, is_decaf6=False, top_k=1,bagging=False):
+    img = load_img(image_path, target_size=(224, 224))
+    x = img_to_array(img)
+    if bagging:
+        pred = _bagging_predict(x, model)
+    else:
+        x = imagenet_preprocess_input(x)
+        x *= 1. / 255
+        pred = model.predict(x[np.newaxis, ...])
+    print(pred)
     dico = get_dico()
     inv_dico = {v: k for k, v in dico.items()}
     args_sorted = np.argsort(pred)[0][::-1]
