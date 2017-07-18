@@ -12,7 +12,7 @@ from utils.utils import imagenet_preprocess_input,wp_preprocess_input
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
 
-def train_model_from_directory(directory_path,model,model_name ='model',target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None,params=None,preprocessing=False,centering = False,distortions=False):
+def train_model_from_directory(directory_path,model,model_name ='model',target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None,params=None,preprocessing=None,distortions=0.):
 
     # Naming and creating folder
     now = datetime.datetime.now()
@@ -39,16 +39,13 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
     _presaving(model,MODEL_DIR,params)
 
     preprocessing_fc =None
-    if preprocessing:
+    if preprocessing=='imagenet':
         preprocessing_fc = imagenet_preprocess_input
-    elif centering:
+    elif preprocessing=='wp':
         preprocessing_fc = wp_preprocess_input
 
     # Training
-    if distortions :
-        train_datagen = ImageDataGenerator(horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc,rotation_range=20,width_shift_range=0.1,height_shift_range=0.1,zoom_range=0.1)
-    else :
-        train_datagen = ImageDataGenerator(horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc)
+    train_datagen = ImageDataGenerator(horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc,rotation_range=90*distortions,width_shift_range=distortions,height_shift_range=distortions,zoom_range=distortions)
     test_datagen = ImageDataGenerator(preprocessing_function=preprocessing_fc)
     train_generator = train_datagen.flow_from_directory(directory_path, target_size = target_size, batch_size = batch_size, class_mode='categorical')
     tbCallBack = TensorBoard(log_dir=MODEL_DIR, histogram_freq=0, write_graph=True, write_images=True)

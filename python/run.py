@@ -22,10 +22,11 @@ parser.add_argument('-e', action="store",default=10,type=int,dest='epochs',help=
 parser.add_argument('-f', action="store", default=False, type=bool,dest='horizontal_flip',help='Set horizontal flip or not [True|False]')
 parser.add_argument('-n', action="store", default=0, type=int,dest='n_layers_trainable',help='Set the number of last trainable layers')
 parser.add_argument('-d', action="store", default=0, type=float,dest='dropout_rate',help='Set the dropout_rate')
-parser.add_argument('-p', action="store_true",dest='preprocessing',help='Set imagenet preprocessing or not')
-parser.add_argument('-c', action="store_true",dest='centering',help='Set centering or not')
 
-parser.add_argument('--distortions', action="store", default=False, type=bool,dest='disto',help='Activate distortions or not')
+
+parser.add_argument('-p', action="store",dest='preprocessing',help='Set imagenet preprocessing or not')
+
+parser.add_argument('--distortions', action="store", type=float,dest='disto',default=0.,help='Activate distortions or not')
 
 parser.add_argument('--train_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_train'),dest='training_path',help='Path of the training data directory')
 parser.add_argument('--val_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_val'),dest='validation_path',help='Path of the validation data directory')
@@ -126,4 +127,4 @@ elif model_name == 'custom_resnet':
     model = custom_resnet(dp_rate=dropout_rate)
 
 model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
-train_model_from_directory(TRAINING_PATH,model,model_name=model_name,target_size=size,validation_path=VAL_PATH,epochs = epochs,batch_size = batch_size,horizontal_flip=flip,params=params,preprocessing=args.preprocessing,centering=args.centering,distortions=args.disto)
+train_model_from_directory(TRAINING_PATH,model,model_name=model_name,target_size=size,validation_path=VAL_PATH,epochs = epochs,batch_size = batch_size,horizontal_flip=flip,params=params,preprocessing=args.preprocessing,distortions=args.disto)
