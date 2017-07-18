@@ -47,29 +47,11 @@ params = vars(args)
 
 # BUILDING MODEL
 
-if model_name =='decaf5':
+
+if model_name =='decaf6':
     K.set_image_data_format('channels_first')
     size = (227, 227)
-    base_model = decaf(rank=5)
-    predictions = Dense(25, activation='softmax')(base_model.output)
-    model = Model(inputs=base_model.input, outputs=predictions)
-    for layer in base_model.layers:
-        layer.trainable = False
-
-elif model_name =='decaf6':
-    K.set_image_data_format('channels_first')
-    size = (227, 227)
-    base_model = decaf(rank=6)
-    predictions = Dense(25, activation='softmax')(base_model.output)
-    model = Model(inputs=base_model.input, outputs=predictions)
-    for layer in base_model.layers:
-        layer.trainable = False
-
-
-elif model_name =='decaf7':
-    K.set_image_data_format('channels_first')
-    size = (227, 227)
-    base_model = decaf(rank=7)
+    base_model = decaf()
     predictions = Dense(25, activation='softmax')(base_model.output)
     model = Model(inputs=base_model.input, outputs=predictions)
     for layer in base_model.layers:
