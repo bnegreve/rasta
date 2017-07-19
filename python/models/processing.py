@@ -20,8 +20,8 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
 
     model_name_temp = model_name
     i=0
-    while os._exists(join(SAVINGS_DIR,model_name_temp)):
-        model_name_temp=model_name+'('+i+')'
+    while os.path.exists(join(SAVINGS_DIR,model_name_temp)):
+        model_name_temp=model_name+'('+str(i)+')'
         i+=1
     MODEL_DIR = join(SAVINGS_DIR,model_name_temp)
     os.makedirs(MODEL_DIR)
