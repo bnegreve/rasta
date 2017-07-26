@@ -185,10 +185,10 @@ def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, p
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
 
-    x = Dropout(dp_rate)(x)
 
     x = conv_block(x, 3, [512, 512, 2048], stage=5, block='a')
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='b')
+    x = Dropout(dp_rate)(x)
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='c')
 
 
