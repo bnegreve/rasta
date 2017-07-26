@@ -75,26 +75,36 @@ if __name__=='__main__':
     model.compile(optimizer='rmsprop', loss='categorical_crossentropy',metrics=['accuracy', metrics.top_k_categorical_accuracy])
 
     scores,labels = get_scores_labels(model,args.data_path,is_decaf=args.isdecaf)
+
+
+    n_per_classes = 200
+    new_scores = []
+    new_labels = []
+    for classe in set(labels):
+        n_class = 0
+        for i,label in enumerate(labels):
+            if label==classe and n_class <n_per_classes:
+                n_class +=1
+                new_scores.append(scores[i,:])
+                new_labels.append(label)
+    print(len(new_scores),len(new_labels))
+
+
+
     dico = get_dico()
     inv_dico = {v: k for k, v in dico.items()}
     APs = []
+
+
+
     for classe in set(labels):
         temp_labels = []
-        n_true = 0
-        n_false = 0
-        idxs=[]
-        for i,label in enumerate(labels):
+        for i,label in enumerate(new_labels):
             if label==classe:
-                if n_true<=50:
-                    temp_labels.append(1)
-                    n_true += 1
-                    idxs.append(i)
+                temp_labels.append(1)
             else:
-                if n_false <= 450:
-                    temp_labels.append(0)
-                    n_false +=1
-                    idxs.append(i)
-        temp_scores = scores[idxs, classe]
+                temp_labels.append(0)
+        temp_scores = new_scores[:, classe]
         score = average_precision_score(np.asarray(temp_labels), temp_scores)
         APs.append(score)
         print(np.sum(np.asarray(temp_labels)),len(temp_labels),len(temp_scores))
