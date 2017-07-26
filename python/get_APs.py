@@ -91,12 +91,13 @@ if __name__=='__main__':
 
 
 
+
     dico = get_dico()
     inv_dico = {v: k for k, v in dico.items()}
     APs = []
 
 
-
+    new_scores = np.asarray(new_scores)
     for classe in set(labels):
         temp_labels = []
         for i,label in enumerate(new_labels):
