@@ -97,6 +97,6 @@ if __name__=='__main__':
         temp_scores = scores[idxs, classe]
         score = average_precision_score(np.asarray(temp_labels), temp_scores)
         APs.append(score)
-        print(np.sum(temp_scores),len(temp_scores))
+        print(np.sum(np.asarray(temp_labels)),len(temp_labels),len(temp_scores))
         print(inv_dico.get(classe),' : ',score)
     print('MEAN : ',np.mean(APs))
