@@ -77,7 +77,7 @@ if __name__=='__main__':
     scores,labels = get_scores_labels(model,args.data_path,is_decaf=args.isdecaf)
 
 
-    n_per_classes = 200
+    n_per_classes = 100
     new_scores = []
     new_labels = []
     for classe in set(labels):
