@@ -41,6 +41,10 @@ def get_scores_labels(model, test_data_path, is_decaf=False):
             scores.append(pred[0])
             i += 1
             bar.update(i)
+
+    index_shuf = range(len(y))
+    y = [y[i] for i in index_shuf]
+    scores = [scores[i] for i in index_shuf]
     return np.asarray(scores),y
 
 
@@ -76,13 +80,23 @@ if __name__=='__main__':
     APs = []
     for classe in set(labels):
         temp_labels = []
-        for label in labels:
-            if label == classe:
-                temp_labels.append(1)
+        n_true = 0
+        n_false = 0
+        idxs=[]
+        for i,label in enumerate(labels):
+            if label==classe:
+                if n_true<=50:
+                    temp_labels.append(1)
+                    n_true += 1
+                    idxs.append(i)
             else:
-                temp_labels.append(0)
-        temp_scores = scores[:, classe]
+                if n_false <= 450:
+                    temp_labels.append(0)
+                    n_false +=1
+                    idxs.append(i)
+        temp_scores = scores[idxs, classe]
         score = average_precision_score(np.asarray(temp_labels), temp_scores)
         APs.append(score)
+        print(np.sum(temp_scores),len(temp_scores))
         print(inv_dico.get(classe),' : ',score)
     print('MEAN : ',np.mean(APs))
