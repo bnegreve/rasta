@@ -95,7 +95,7 @@ elif model_name =='empty_resnet':
     predictions = Dense(25, activation='softmax')(base_model.output)
     model = Model(inputs=base_model.input, outputs=predictions)
 
-elif model_name=='dropout_resnet':
+elif model_name=='resnet_dropout':
     K.set_image_data_format('channels_last')
     size = (224, 224)
     base_model = resnet_dropout(dp_rate=dropout_rate,n_retrain_layers=n_layers_trainable)
