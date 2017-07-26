@@ -7,7 +7,7 @@ import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import TensorBoard,ModelCheckpoint
 from keras.preprocessing.image import load_img
-from utils.utils import imagenet_preprocess_input,wp_preprocess_input
+from utils.utils import imagenet_preprocess_input,wp_preprocess_input,custom_preprocess_input
 
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
@@ -43,6 +43,9 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
         preprocessing_fc = imagenet_preprocess_input
     elif preprocessing=='wp':
         preprocessing_fc = wp_preprocess_input
+    elif preprocessing =='custom':
+        preprocessing_fc = custom_preprocess_input
+
 
     # Training
     train_datagen = ImageDataGenerator(horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc,rotation_range=90*distortions,width_shift_range=distortions,height_shift_range=distortions,zoom_range=distortions)
