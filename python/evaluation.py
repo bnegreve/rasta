@@ -15,6 +15,8 @@ import json
 from datetime import datetime
 from keras.preprocessing.image import load_img,img_to_array
 from utils.utils import imagenet_preprocess_input,get_dico,wp_preprocess_input
+from keras import activations
+from vis.utils import utils
 
 def main():
     PATH = os.path.dirname(__file__)
@@ -58,12 +60,12 @@ def main():
             model_name = model_path.split('/')[-2]
             print(model_name)
             with open(RESULT_FILE_PATH,'a') as f:
-                   f.write('\n'+model_name+";"+str(preds[0])+";"+str(preds[1])+";"+str(preds[2])+';'+str(datetime.now()))
+                   f.write('\n'+model_name+";"+str(preds[0])+";"+str(preds[1])+";"+str(preds[2])+';'+str(datetime.now())+';'+args.b+';'+args.preprocessing)
 
     elif eval_type == 'pred':
         k = k[0]
         model = init(model_path, isdecaf)
-        pred,pcts = get_pred(model, data_path, is_decaf6=isdecaf, top_k=k,bagging=args.b,preprocessing=args.preprocessing)
+        pred,pcts = get_pred_2(model, data_path, is_decaf6=isdecaf, top_k=k,bagging=args.b,preprocessing=args.preprocessing)
         print(pcts)
         if args.json:
             result = { 'pred' : pred, 'k' : k }
@@ -163,6 +165,56 @@ def get_pred(model, image_path, is_decaf6=False, top_k=1,bagging=False,preproces
     pcts = [pred[0][a] for a in args_sorted[:top_k]]
     return preds,pcts
 
+def get_vals_class(model, class_path, is_decaf6=False, top_k=1,bagging=False,preprocessing=None):
+    target_size = (224, 224)
+    print('OUA')
+    model.layers[-1].activation = activations.linear
+    model = utils.apply_modifications(model)
+
+    if is_decaf6:
+        target_size = (227, 227)
+    bar=ProgressBar(max_value=len(os.listdir(class_path)))
+    all_pcts = []
+    for i,img_path in enumerate(os.listdir(class_path)):
+        img = load_img(join(class_path,img_path), target_size=target_size)
+        x = img_to_array(img)
+        if bagging:
+            pred = _bagging_predict(x, model,preprocessing=preprocessing)
+        else:
+            x = _preprocess_input(x,preprocessing=preprocessing)
+            pred = model.predict(x[np.newaxis, ...])
+        dico = get_dico()
+        inv_dico = {v: k for k, v in dico.items()}
+        args_sorted = np.argsort(pred)[0][::-1]
+        #preds = [inv_dico.get(a) for a in args_sorted[:top_k]]
+        pcts = pred[0][dico.get('Ukiyo-e')]
+        all_pcts.append(pcts)
+        bar.update(i)
+    return all_pcts
+
+def get_vals_class_2(model, class_path, is_decaf6=False, top_k=1,bagging=False,preprocessing=None):
+    target_size = (224, 224)
+    print('OUA')
+    if is_decaf6:
+        target_size = (227, 227)
+    bar=ProgressBar(max_value=len(os.listdir(class_path)))
+    all_pcts = []
+    for i,img_path in enumerate(os.listdir(class_path)):
+        img = load_img(join(class_path,img_path), target_size=target_size)
+        x = img_to_array(img)
+        if bagging:
+            pred = _bagging_predict(x, model,preprocessing=preprocessing)
+        else:
+            x = _preprocess_input(x,preprocessing=preprocessing)
+            pred = model.predict(x[np.newaxis, ...])
+        dico = get_dico()
+        inv_dico = {v: k for k, v in dico.items()}
+        args_sorted = np.argsort(pred)[0][::-1]
+        #preds = [inv_dico.get(a) for a in args_sorted[:top_k]]
+        pcts = pred[0][dico.get('Ukiyo-e')]
+        all_pcts.append(pcts)
+        bar.update(i)
+    return all_pcts
 
 def get_top_multi_acc(model_path, test_data_path, is_decaf6=False,top_k=[1,3,5],bagging=False,preprocessing=None):
     y_pred, y = get_y_pred(model_path, test_data_path, is_decaf6, max(top_k),bagging=bagging,preprocessing=preprocessing)
@@ -209,4 +261,23 @@ def get_per_class_accuracy(labels,preds):
     return accs,names
 
 if __name__ == '__main__':
+    #parser = argparse.ArgumentParser(description='Description')
+    #parser.add_argument('-t', action="store", default='acc', dest='type', help='Type of evaluation [pred|acc]')
+    #parser.add_argument('--isdecaf', action="store_true", dest='isdecaf',
+    #                   help='if the model is a decaf6 type')
+    #parser.add_argument('-k', action="store", default='1,3,5', type=str, dest='k', help='top-k number')
+    #parser.add_argument('--data_path', action="store", dest='data_path',
+    #                   help='Path of the data (image or train folder)')
+    #parser.add_argument('--model_path', action="store", dest='model_path',
+    #                   help='Path of the h5 model file',required=True)
+    #parser.add_argument('-j', action="store_true", dest='json', help='Output prediction as json')
+    #parser.add_argument('-s', action="store_true", dest='save', help='Save accuracy in results file')
+    #parser.add_argument('-b', action="store_true", dest='b', help='Sets bagging')
+    #parser.add_argument('-p', action="store", dest='preprocessing', help='Type of preprocessing : [imagenet|wp]')
+
+
+    #args = parser.parse_args()
+    #y,labels = get_y_pred(args.model_path, args.data_path, is_decaf6=False, top_k=1, bagging=True, preprocessing='imagenet')
+    #plot_confusion_matrix(labels, y)
+
     main()
