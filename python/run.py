@@ -1,4 +1,4 @@
-from models.alexnet import decaf
+from models.alexnet import decaf,alexnet
 from models.processing import train_model_from_directory
 from models.custom_resnets import *
 from models.inceptionV4 import inception_v4
@@ -47,6 +47,12 @@ dropout_rate = args.dropout_rate
 params = vars(args)
 
 # BUILDING MODEL
+
+
+if model_name =='alexnet_empty':
+    K.set_image_data_format('channels_first')
+    size = (227, 227)
+    model = alexnet(weights=None)
 
 
 if model_name =='decaf6':
@@ -110,17 +116,17 @@ elif model_name=='resnet_18':
 elif model_name=='resnet_34':
     size = (224, 224)
     K.set_image_data_format('channels_last')
-    model =  resnet18()
+    model =  resnet34()
 
 elif model_name=='resnet_101':
     size = (224, 224)
     K.set_image_data_format('channels_last')
-    model =  resnet18()
+    model =  resnet101()
 
 elif model_name=='resnet_152':
     size = (224, 224)
     K.set_image_data_format('channels_last')
-    model =  resnet18()
+    model =  resnet152()
 elif model_name == 'custom_resnet':
     size = (224, 224)
     K.set_image_data_format('channels_last')
