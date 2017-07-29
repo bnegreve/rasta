@@ -53,6 +53,8 @@ if model_name =='alexnet_empty':
     K.set_image_data_format('channels_first')
     size = (227, 227)
     model = alexnet(weights=None)
+    for layer in model.layers:
+        layer.trainable = True
 
 
 if model_name =='decaf6':
