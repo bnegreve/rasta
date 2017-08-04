@@ -32,15 +32,7 @@ def resnet_trained_2(n_retrain_layers = 0):
     base_model = ResNet50(include_top=False, input_shape=(224, 224, 3))
     features = GlobalAveragePooling2D()(base_model.output)
     model = Model(inputs=base_model.input, outputs=features)
-    empty_model = empty_resnet()
-
-    split_value = len(base_model.layers) + 1 - n_retrain_layers
-    for layer in model.layers[:split_value]:
-        layer.trainable = False
-    for layer, layer_empty in zip(model.layers[split_value:], empty_model.layers[split_value:]):
-        layer.trainable = True
-        w = layer_empty.get_weights()
-        layer.set_weights(w)
+    model = _set_n_retrain(model, n_retrain_layers,reinit=True)
     return model
 
 def empty_resnet():
@@ -241,19 +233,33 @@ def _get_weighted_layers(model):
             res.append(layer.name)
     return res
 
-def _set_n_retrain(model,n):
+def _set_n_retrain(model,n,reinit=False):
     w_layers = _get_weighted_layers(model)
+    if reinit:
+        empty_model = empty_resnet()
+
     if n > len(w_layers):
         n == len(w_layers)
     if n>0:
-        for layer in model.layers:
-            if layer.name in w_layers[-n:]:
-                layer.trainable = True
-            else:
-                layer.trainable = False
+        if reinit:
+            for layer, layer_empty in zip(model.layers, empty_model.layers):
+                if layer.name in w_layers[-n:]:
+                    layer.trainable = True
+                    w = layer_empty.get_weights()
+                    layer.set_weights(w)
+                else:
+                    layer.trainable = False
+        else :
+            for layer in model.layers:
+                if layer.name in w_layers[-n:]:
+                    layer.trainable = True
+                else:
+                    layer.trainable = False
+
     else :
         for layer in model.layers:
             layer.trainable = False
+
     return model
 
 
