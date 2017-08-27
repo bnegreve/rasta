@@ -1,4 +1,3 @@
-from keras.utils import plot_model
 from keras.models import load_model
 import os,datetime
 from os.path import join
@@ -8,12 +7,12 @@ import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import TensorBoard,ModelCheckpoint
 from keras.preprocessing.image import load_img
-from ..utils.utils import imagenet_preprocess_input,wp_preprocess_input
+from utils.utils import imagenet_preprocess_input,wp_preprocess_input,custom_preprocess_input
 
 PATH = os.path.dirname(__file__)
 SAVINGS_DIR = join(PATH,'../../savings')
 
-def train_model_from_directory(directory_path,model,model_name ='model',target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None,params=None,preprocessing=False,centering = False):
+def train_model_from_directory(directory_path,model,model_name ='model',target_size =(256,256) ,batch_size = 64 ,horizontal_flip = False,epochs=30,steps_per_epoch=None,validation_path=None,validation_steps=None,params=None,preprocessing=None,distortions=0.):
 
     # Naming and creating folder
     now = datetime.datetime.now()
@@ -21,8 +20,8 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
 
     model_name_temp = model_name
     i=0
-    while os._exists(join(SAVINGS_DIR,model_name_temp)):
-        model_name_temp=model_name+'('+i+')'
+    while os.path.exists(join(SAVINGS_DIR,model_name_temp)):
+        model_name_temp=model_name+'('+str(i)+')'
         i+=1
     MODEL_DIR = join(SAVINGS_DIR,model_name_temp)
     os.makedirs(MODEL_DIR)
@@ -40,13 +39,17 @@ def train_model_from_directory(directory_path,model,model_name ='model',target_s
     _presaving(model,MODEL_DIR,params)
 
     preprocessing_fc =None
-    if preprocessing:
+    if preprocessing=='imagenet':
         preprocessing_fc = imagenet_preprocess_input
+    elif preprocessing=='wp':
+        preprocessing_fc = wp_preprocess_input
+    elif preprocessing =='custom':
+        preprocessing_fc = custom_preprocess_input
 
 
     # Training
-    train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc,featurewise_center=centering)
-    test_datagen = ImageDataGenerator(rescale=1./255,preprocessing_function=preprocessing_fc)
+    train_datagen = ImageDataGenerator(horizontal_flip = horizontal_flip,preprocessing_function=preprocessing_fc,rotation_range=90*distortions,width_shift_range=distortions,height_shift_range=distortions,zoom_range=distortions)
+    test_datagen = ImageDataGenerator(preprocessing_function=preprocessing_fc)
     train_generator = train_datagen.flow_from_directory(directory_path, target_size = target_size, batch_size = batch_size, class_mode='categorical')
     tbCallBack = TensorBoard(log_dir=MODEL_DIR, histogram_freq=0, write_graph=True, write_images=True)
     if validation_path!=None:

@@ -32,15 +32,7 @@ def resnet_trained_2(n_retrain_layers = 0):
     base_model = ResNet50(include_top=False, input_shape=(224, 224, 3))
     features = GlobalAveragePooling2D()(base_model.output)
     model = Model(inputs=base_model.input, outputs=features)
-    empty_model = empty_resnet()
-
-    split_value = len(base_model.layers) + 1 - n_retrain_layers
-    for layer in model.layers[:split_value]:
-        layer.trainable = False
-    for layer, layer_empty in zip(model.layers[split_value:], empty_model.layers[split_value:]):
-        layer.trainable = True
-        w = layer_empty.get_weights()
-        layer.set_weights(w)
+    model = _set_n_retrain(model, n_retrain_layers,reinit=True)
     return model
 
 def empty_resnet():
@@ -62,7 +54,7 @@ def resnet152():
     return ResnetBuilder.build_resnet_152((3,224,224),25)
 
 
-def custom_resnet(n=0):
+def custom_resnet(n=0,dp_rate=0):
 
 
     WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels.h5'
@@ -88,11 +80,13 @@ def custom_resnet(n=0):
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
 
+
     x = conv_block(x, 3, [128, 128, 512], stage=3, block='a')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
 
+    x = Dropout(dp_rate)(x)
 
     x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
@@ -100,6 +94,8 @@ def custom_resnet(n=0):
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='d')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
+
+    x = Dropout(dp_rate)(x)
 
     x = AveragePooling2D((7, 7), name='avg_pool')(x)
 
@@ -174,8 +170,6 @@ def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, p
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
 
-    x = Dropout(dp_rate)(x)
-
     x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='c')
@@ -183,10 +177,10 @@ def resnet_dropout(include_top=False, weights='imagenet', input_tensor = None, p
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
 
-    x = Dropout(dp_rate)(x)
 
     x = conv_block(x, 3, [512, 512, 2048], stage=5, block='a')
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='b')
+    x = Dropout(dp_rate)(x)
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='c')
 
 
@@ -239,19 +233,33 @@ def _get_weighted_layers(model):
             res.append(layer.name)
     return res
 
-def _set_n_retrain(model,n):
+def _set_n_retrain(model,n,reinit=False):
     w_layers = _get_weighted_layers(model)
+    if reinit:
+        empty_model = empty_resnet()
+
     if n > len(w_layers):
         n == len(w_layers)
     if n>0:
-        for layer in model.layers:
-            if layer.name in w_layers[-n:]:
-                layer.trainable = True
-            else:
-                layer.trainable = False
+        if reinit:
+            for layer, layer_empty in zip(model.layers, empty_model.layers):
+                if layer.name in w_layers[-n:]:
+                    layer.trainable = True
+                    w = layer_empty.get_weights()
+                    layer.set_weights(w)
+                else:
+                    layer.trainable = False
+        else :
+            for layer in model.layers:
+                if layer.name in w_layers[-n:]:
+                    layer.trainable = True
+                else:
+                    layer.trainable = False
+
     else :
         for layer in model.layers:
             layer.trainable = False
+
     return model
 
 

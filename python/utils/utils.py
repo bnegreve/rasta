@@ -21,6 +21,14 @@ def wp_preprocess_input(x):
 
     return x
 
+def custom_preprocess_input(x):
+    x = x[:, :, ::-1]
+    # Zero-center by mean pixel
+    x[:, :, 0] -= 103.939
+    x[:, :, 1] -= 116.779
+    x[:, :, 2] -= 123.68
+    x *= 1./255
+
 def get_dico():
     classes = []
     PATH = os.path.dirname(__file__)

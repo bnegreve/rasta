@@ -1,4 +1,6 @@
 
+data/mdpi
+
 env/
 
 notebooks/
@@ -28,3 +30,5 @@ savings/
 *.aux
 
 python/\.idea/
+
+OLD_SAVINGS/

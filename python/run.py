@@ -1,4 +1,4 @@
-from models.alexnet import decaf
+from models.alexnet import decaf,alexnet
 from models.processing import train_model_from_directory
 from models.custom_resnets import *
 from models.inceptionV4 import inception_v4
@@ -22,12 +22,15 @@ parser.add_argument('-e', action="store",default=10,type=int,dest='epochs',help=
 parser.add_argument('-f', action="store", default=False, type=bool,dest='horizontal_flip',help='Set horizontal flip or not [True|False]')
 parser.add_argument('-n', action="store", default=0, type=int,dest='n_layers_trainable',help='Set the number of last trainable layers')
 parser.add_argument('-d', action="store", default=0, type=float,dest='dropout_rate',help='Set the dropout_rate')
-parser.add_argument('-p', action="store_true",dest='preprocessing',help='Set imagenet preprocessing or not')
-parser.add_argument('-c', action="store_true",dest='centering',help='Set centering or not')
 
-parser.add_argument('--multi_gpu', action="store", default=False, type=bool,dest='multi_gpu',help='Enable multi_gpu')
+
+parser.add_argument('-p', action="store",dest='preprocessing',help='Set imagenet preprocessing or not')
+
+parser.add_argument('--distortions', action="store", type=float,dest='disto',default=0.,help='Activate distortions or not')
+
 parser.add_argument('--train_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_train'),dest='training_path',help='Path of the training data directory')
 parser.add_argument('--val_path', action="store", default=join(PATH, '../data/wikipaintings_10/wikipaintings_val'),dest='validation_path',help='Path of the validation data directory')
+
 
 
 args = parser.parse_args()
@@ -40,35 +43,24 @@ TRAINING_PATH = args.training_path
 VAL_PATH = args.validation_path
 n_layers_trainable = args.n_layers_trainable
 dropout_rate = args.dropout_rate
-multi_gpu = args.multi_gpu
 
 params = vars(args)
 
 # BUILDING MODEL
 
-if model_name =='decaf5':
+
+if model_name =='alexnet_empty':
     K.set_image_data_format('channels_first')
     size = (227, 227)
-    base_model = decaf(rank=5)
-    predictions = Dense(25, activation='softmax')(base_model.output)
-    model = Model(inputs=base_model.input, outputs=predictions)
-    for layer in base_model.layers:
-        layer.trainable = False
+    model = alexnet(weights=None)
+    for layer in model.layers:
+        layer.trainable = True
 
-elif model_name =='decaf6':
+
+if model_name =='decaf6':
     K.set_image_data_format('channels_first')
     size = (227, 227)
-    base_model = decaf(rank=6)
-    predictions = Dense(25, activation='softmax')(base_model.output)
-    model = Model(inputs=base_model.input, outputs=predictions)
-    for layer in base_model.layers:
-        layer.trainable = False
-
-
-elif model_name =='decaf7':
-    K.set_image_data_format('channels_first')
-    size = (227, 227)
-    base_model = decaf(rank=7)
+    base_model = decaf()
     predictions = Dense(25, activation='softmax')(base_model.output)
     model = Model(inputs=base_model.input, outputs=predictions)
     for layer in base_model.layers:
@@ -111,7 +103,7 @@ elif model_name =='empty_resnet':
     predictions = Dense(25, activation='softmax')(base_model.output)
     model = Model(inputs=base_model.input, outputs=predictions)
 
-elif model_name=='dropout_resnet':
+elif model_name=='resnet_dropout':
     K.set_image_data_format('channels_last')
     size = (224, 224)
     base_model = resnet_dropout(dp_rate=dropout_rate,n_retrain_layers=n_layers_trainable)
@@ -126,24 +118,21 @@ elif model_name=='resnet_18':
 elif model_name=='resnet_34':
     size = (224, 224)
     K.set_image_data_format('channels_last')
-    model =  resnet18()
+    model =  resnet34()
 
 elif model_name=='resnet_101':
     size = (224, 224)
     K.set_image_data_format('channels_last')
-    model =  resnet18()
+    model =  resnet101()
 
 elif model_name=='resnet_152':
     size = (224, 224)
     K.set_image_data_format('channels_last')
-    model =  resnet18()
+    model =  resnet152()
 elif model_name == 'custom_resnet':
     size = (224, 224)
     K.set_image_data_format('channels_last')
-    model = custom_resnet()
-
-if multi_gpu:
-    model = to_multi_gpu(model)
+    model = custom_resnet(dp_rate=dropout_rate)
 
 model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
-train_model_from_directory(TRAINING_PATH,model,model_name=model_name,target_size=size,validation_path=VAL_PATH,epochs = epochs,batch_size = batch_size,horizontal_flip=flip,params=params,preprocessing=args.preprocessing,centering=args.centering)
+train_model_from_directory(TRAINING_PATH,model,model_name=model_name,target_size=size,validation_path=VAL_PATH,epochs = epochs,batch_size = batch_size,horizontal_flip=flip,params=params,preprocessing=args.preprocessing,distortions=args.disto)
