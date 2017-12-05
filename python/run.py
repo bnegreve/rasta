@@ -8,7 +8,6 @@ from keras import backend as K
 import os
 from os.path import join
 import argparse
-from multi_gpu import to_multi_gpu
 
 PATH = os.path.dirname(__file__)
 
@@ -16,13 +15,12 @@ PATH = os.path.dirname(__file__)
 
 parser = argparse.ArgumentParser(description='Description')
 
-parser.add_argument('-m', action="store", default='resnet',dest='model_name',help='Name of the model [decaf|decaf6|decaf7|resnet|resnetfull|resnetfullempty]')
+parser.add_argument('-m', action="store", default='resnet',dest='model_name',help='Name of the model [alexnet_empty|decaf6|resnet|inception|inceptionv4|resnet2|empty_resnet|resnet_dropout|resnet_18|resnet_34|resnet_101|resnet_152|custom_resnet')
 parser.add_argument('-b', action="store", default=32, type=int,dest='batch_size',help='Size of the batch.')
 parser.add_argument('-e', action="store",default=10,type=int,dest='epochs',help='Number of epochs')
 parser.add_argument('-f', action="store", default=False, type=bool,dest='horizontal_flip',help='Set horizontal flip or not [True|False]')
 parser.add_argument('-n', action="store", default=0, type=int,dest='n_layers_trainable',help='Set the number of last trainable layers')
 parser.add_argument('-d', action="store", default=0, type=float,dest='dropout_rate',help='Set the dropout_rate')
-
 
 parser.add_argument('-p', action="store",dest='preprocessing',help='Set imagenet preprocessing or not')
 
@@ -56,8 +54,7 @@ if model_name =='alexnet_empty':
     for layer in model.layers:
         layer.trainable = True
 
-
-if model_name =='decaf6':
+elif model_name =='decaf6':
     K.set_image_data_format('channels_first')
     size = (227, 227)
     base_model = decaf()
@@ -133,6 +130,8 @@ elif model_name == 'custom_resnet':
     size = (224, 224)
     K.set_image_data_format('channels_last')
     model = custom_resnet(dp_rate=dropout_rate)
+else:
+    print("The model name doesn't exist")
 
 model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
 train_model_from_directory(TRAINING_PATH,model,model_name=model_name,target_size=size,validation_path=VAL_PATH,epochs = epochs,batch_size = batch_size,horizontal_flip=flip,params=params,preprocessing=args.preprocessing,distortions=args.disto)

@@ -2,6 +2,8 @@ import os
 from os.path import join
 
 
+#PREPROCESSING FUNCTIONS
+
 def imagenet_preprocess_input(x):
     # 'RGB'->'BGR'
     x = x[:, :, ::-1]
@@ -29,6 +31,9 @@ def custom_preprocess_input(x):
     x[:, :, 2] -= 123.68
     x *= 1./255
 
+
+#DICO FUNCTIONS
+
 def get_dico():
     classes = []
     PATH = os.path.dirname(__file__)
@@ -38,3 +43,6 @@ def get_dico():
             classes.append(subdir)
     class_indices = dict(zip(classes, range(len(classes))))
     return class_indices
+
+def invert_dico(dico):
+    return {v: k for k, v in dico.items()}
