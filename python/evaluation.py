@@ -18,6 +18,10 @@ from utils.utils import imagenet_preprocess_input,get_dico,wp_preprocess_input,i
 from keras import activations
 from vis.utils import utils
 
+DEFAULT_MODEL_PATH='models/best/model.h5'
+DEFAULT_BAGGING=True
+DEFAULT_PREPROCESSING='imagenet'
+
 def main():
     PATH = os.path.dirname(__file__)
     RESULT_FILE_PATH  = join(PATH,'../savings/results.csv')
@@ -32,12 +36,13 @@ def main():
     parser.add_argument('--data_path', action="store",
                         default=join(PATH, '../data/wikipaintings_10/wikipaintings_test'), dest='data_path',
                         help='Path of the data (image or train folder)')
-    parser.add_argument('--model_path', action="store", dest='model_path',
-                        help='Path of the h5 model file',required=True)
+    parser.add_argument('--model_path', action="store", dest='model_path', default=DEFAULT_MODEL_PATH,
+                        help='Path of the h5 model file')
     parser.add_argument('-j', action="store_true", dest='json', help='Output prediction as json')
     parser.add_argument('-s', action="store_true", dest='save', help='Save accuracy in results file')
-    parser.add_argument('-b', action="store_true", dest='b', help='Sets bagging')
-    parser.add_argument('-p', action="store", dest='preprocessing', help='Type of preprocessing : [imagenet|wp]')
+    parser.add_argument('-b', action="store_true", dest='b', default=DEFAULT_BAGGING, help='Sets bagging')
+    parser.add_argument('-p', action="store", dest='preprocessing', default=DEFAULT_PREPROCESSING,
+                        help='Type of preprocessing : [imagenet|wp]')
 
 
     args = parser.parse_args()
@@ -151,7 +156,7 @@ def init(model_path, is_decaf6=False):
                   metrics=['accuracy', metrics.top_k_categorical_accuracy])    
     return model
 
-def get_pred(model, image_path, is_decaf6=False, top_k=1,bagging=False,preprocessing=None):
+def get_pred(model, image_path, is_decaf6=False, top_k=1,bagging=DEFAULT_BAGGING,preprocessing=DEFAULT_PREPROCESSING):
     target_size = (224, 224)
     if is_decaf6:
         target_size = (227, 227)
