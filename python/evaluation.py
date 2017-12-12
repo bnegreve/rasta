@@ -65,7 +65,7 @@ def main():
             model_name = model_path.split('/')[-2]
             print(model_name)
             with open(RESULT_FILE_PATH,'a') as f:
-                   f.write('\n'+model_name+";"+str(preds[0])+";"+str(preds[1])+";"+str(preds[2])+';'+str(datetime.now())+';'+args.b+';'+args.preprocessing)
+                   f.write('\n'+model_name+";"+str(preds[0])+";"+str(preds[1])+";"+str(preds[2])+';'+str(datetime.now())+';'+str(args.b)+';'+args.preprocessing)
 
     elif eval_type == 'pred':
         k = k[0]
