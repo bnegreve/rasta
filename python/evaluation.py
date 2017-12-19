@@ -18,13 +18,13 @@ from utils.utils import imagenet_preprocess_input,get_dico,wp_preprocess_input,i
 from keras import activations
 from vis.utils import utils
 
-DEFAULT_MODEL_PATH='models/best/model.h5'
+DEFAULT_MODEL_PATH='models/default/model.h5'
 DEFAULT_BAGGING=True
 DEFAULT_PREPROCESSING='imagenet'
 
 def main():
     PATH = os.path.dirname(__file__)
-    RESULT_FILE_PATH  = join(PATH,'../savings/results.csv')
+    RESULT_FILE_PATH  = join(PATH,'../models/results.csv')
     K.set_image_data_format('channels_last')
 
     parser = argparse.ArgumentParser(description='Description')

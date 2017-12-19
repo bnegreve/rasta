@@ -1,50 +1,62 @@
-# RASTA-Project
+# RASTA
 
+The Rasta project aims at recognising art style automatically using pixel data only (i.e. no meta-data). For more details about the methodology and the results, see the publication.
 
-## Train on a simple example dataset
+Adrian Lecoutre, Benjamin Negrevergne and Florian Yger. Rasta: Recognizing art style automatically in painting with deep learning. In Asian Conference on Machine Learning, 2017.
 
-### install all python requirements (see python/requirements.txt)
+# How to use this code
+
+## Setup Rasta environment with Pip
+
+You can install  python requirements with
 
    `pip3 install -r python/requirements.txt`
 
-### to train decaf6 on wikipaintings_10 run: 
+See python/requirements.txt for the complete list of requirements.
 
-    `python3 python/run.py`
-    
-Run `python3 python/run.py -h` to see parameters
-    
-Default parameters are :
-  * model_name = resnet
-  * batch_size = 32
-  * epochs = 10
-  * Horizontal_flip = False
-  * train_path = data/wikipaintings_10/wikipaintings_train
-  * val_path = data/wikipaintings_10/wikipaintings_val
+If you have access to GPUs  we encourage you to use them, this will speedup both inference and training. To use GPU, install tensorflow-gpu in addition to previous packages.
+
+   `pip3 install tensorflow-gpu` 
+
+## Predict the style of one image
+
+    `python3 python/evaluation.py -t pred  --data_path=PATH_TO_IMAGE`
+
+Where PATH_TO_IMAGE points toward a valid jpeg image file.
+
+See `python3 python/evaluation.py -h` for more details 
+
+## Evaluate Rasta models on a large batch of images
+
+You can evaluate  Rasta using:
+
+    `python3 python/evaluation.py`
+
+This will evaluate the accuracy on a the small test set available in wikipaintings_10/wikipaintings_test using the default Rasta model.
+
+You can evaluate other models, on user (larger) datasets with:
+
+    `python3 python/evaluation.py --model_path=MODEL_PATH --data_path=DATA_PATH`
+
+where MODEL_PATH is the path to a .h5 model file, and  DATA_PATH is a path to a directory containing the test set. In the test set, there should be one sub-directory for each class containing all the images of this class. See wikipaintings_10/wikipaintings_test. 
 
 
-## Evaluate a model
+See `python3 python/evaluation.py -h` for more details 
 
-Once the model is trained, you can evaluate the model by running
-    `python3 python/evaluation.py --model_path=YOUR_MODEL_PATH`
+Note: At the moment --isdecaf is necessary if you want to evaluate models based on decaf. Hopefully, this will be fixed soon. 
 
-The YOUR_MODEL_PATH references to the path of your .h5 saved model (see savings folder).
+# License
 
-There is 2 types of evaluations :
-  * Accuracy evaluation : The top-k accuracy of the model is calculated given a specified training folder
-  * Prediction : The top-k prediction is calculated given a specified image
+See LICENSE file.
 
-Run `python3 python/evaluation.py -h` to see parameters.
+# Authors
 
-Default parameters are :
-  * type = acc
-  * k = 1
-  * isdecaf = False
-  * data_path = data/wikipainting_10/wikipainting_10_test
-  * model_path = None
+- Adrian Lecoutre
+- Benjamin Negrevergne
+- Florian Yger
 
---data_path argument can reference the test folder or the image file, depending on the type of evaluation.
+# Contact author
 
---isdecaf is necessary for the moment, because the evaluation for a decaf model is not exactly the same, due to a bug that will be fixed in the near future.
-
+Benjamin Negrevergne: firstname.lastname @ dauphine.fr
 
 
