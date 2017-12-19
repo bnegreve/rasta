@@ -6,23 +6,40 @@ Adrian Lecoutre, Benjamin Negrevergne and Florian Yger. Rasta: Recognizing art s
 
 # How to use this code
 
-## Setup Rasta environment with Pip
+## Setup Rasta Python environment with Pip
 
 You can install  python requirements with
 
-   `pip3 install -r python/requirements.txt`
+   pip3 install -r python/requirements.txt
 
 See python/requirements.txt for the complete list of requirements.
 
 If you have access to GPUs  we encourage you to use them, this will speedup both inference and training. To use GPU, install tensorflow-gpu in addition to previous packages.
 
-   `pip3 install tensorflow-gpu` 
+   pip3 install tensorflow-gpu
+
+
+## Download model files (mandatory)
+
+    cd models
+    wget www.lamsade.dauphine.fr/~bnegrevergne/webpage/software/rasta/rasta_models.tgz
+    tar xzvf rasta_models.tgz
+    cd ../
+
+## Download extra data files (optional)
+
+   If you want to download the full wikipaintings dataset (from WikiArt), execute the following commands, otherwise, you can use the small datasets provided in data/wikipaintaings_small
+
+    cd data
+    wget www.lamsade.dauphine.fr/~bnegrevergne/webpage/software/rasta/wikipaintaings_full.tgz
+    tar xzvf wikipaintings_full.tgz
+    cd ../
 
 ## Predict the style of one image
 
-    `python3 python/evaluation.py -t pred  --data_path=PATH_TO_IMAGE`
+   python3 python/evaluation.py -t pred  --data_path=PATH_TO_IMAGE
 
-Where PATH_TO_IMAGE points toward a valid jpeg image file.
+Where `PATH_TO_IMAGE` points toward a valid jpeg image file.
 
 See `python3 python/evaluation.py -h` for more details 
 
@@ -30,15 +47,15 @@ See `python3 python/evaluation.py -h` for more details
 
 You can evaluate  Rasta using:
 
-    `python3 python/evaluation.py`
+    python3 python/evaluation.py
 
-This will evaluate the accuracy on a the small test set available in wikipaintings_10/wikipaintings_test using the default Rasta model.
+This will evaluate the accuracy on a the small test set available in wikipaintings_small/wikipaintings_test using the default Rasta model.
 
 You can evaluate other models, on user (larger) datasets with:
 
-    `python3 python/evaluation.py --model_path=MODEL_PATH --data_path=DATA_PATH`
+    python3 python/evaluation.py --model_path=MODEL_PATH --data_path=DATA_PATH
 
-where MODEL_PATH is the path to a .h5 model file, and  DATA_PATH is a path to a directory containing the test set. In the test set, there should be one sub-directory for each class containing all the images of this class. See wikipaintings_10/wikipaintings_test. 
+where `MODEL_PATH` is the path to a .h5 model file, and  `DATA_PATH` is a path to a directory containing the test set. In the test set, there should be one sub-directory for each class containing all the images of this class. See wikipaintings_small/wikipaintings_test. 
 
 
 See `python3 python/evaluation.py -h` for more details 
