@@ -34,7 +34,7 @@ def main():
                         help='if the model is a decaf6 type')
     parser.add_argument('-k', action="store", default='1,3,5', type=str, dest='k', help='top-k number')
     parser.add_argument('--data_path', action="store",
-                        default=join(PATH, '../data/wikipaintings_10/wikipaintings_test'), dest='data_path',
+                        default=join(PATH, '../data/wikipaintings_small/wikipaintings_test'), dest='data_path',
                         help='Path of the data (image or train folder)')
     parser.add_argument('--model_path', action="store", dest='model_path', default=DEFAULT_MODEL_PATH,
                         help='Path of the h5 model file')
