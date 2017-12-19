@@ -10,13 +10,13 @@ Adrian Lecoutre, Benjamin Negrevergne and Florian Yger. Rasta: Recognizing art s
 
 You can install  python requirements with
 
-   pip3 install -r python/requirements.txt
+    pip3 install -r python/requirements.txt
 
-See python/requirements.txt for the complete list of requirements.
+See `python/requirements.txt` for the complete list of requirements.
 
 If you have access to GPUs  we encourage you to use them, this will speedup both inference and training. To use GPU, install tensorflow-gpu in addition to previous packages.
 
-   pip3 install tensorflow-gpu
+    pip3 install tensorflow-gpu
 
 
 ## Download model files (mandatory)
@@ -28,7 +28,7 @@ If you have access to GPUs  we encourage you to use them, this will speedup both
 
 ## Download extra data files (optional)
 
-   If you want to download the full wikipaintings dataset (from WikiArt), execute the following commands, otherwise, you can use the small datasets provided in data/wikipaintaings_small
+   If you want to download the full wikipaintings dataset (the one from WikiArt), execute the following commands. Warning: the file is about ~20GiB, we suggest that you first try with the small datasets provided in `data/wikipaintaings_small`.
 
     cd data
     wget www.lamsade.dauphine.fr/~bnegrevergne/webpage/software/rasta/wikipaintaings_full.tgz
@@ -37,7 +37,9 @@ If you have access to GPUs  we encourage you to use them, this will speedup both
 
 ## Predict the style of one image
 
-   python3 python/evaluation.py -t pred  --data_path=PATH_TO_IMAGE
+Use
+
+    python3 python/evaluation.py -t pred  --data_path=PATH_TO_IMAGE
 
 Where `PATH_TO_IMAGE` points toward a valid jpeg image file.
 
@@ -45,22 +47,22 @@ See `python3 python/evaluation.py -h` for more details
 
 ## Evaluate Rasta models on a large batch of images
 
-You can evaluate  Rasta using:
+You can evaluate the accuracy of the default Rasta model using:
 
     python3 python/evaluation.py
 
-This will evaluate the accuracy on a the small test set available in wikipaintings_small/wikipaintings_test using the default Rasta model.
+This will evaluate the accuracy on a the small test set available in `wikipaintings_small/wikipaintings_test` using the model in `models/default`.
 
-You can evaluate other models, on user (larger) datasets with:
+You can evaluate the accuracy of other Rasta models, or using other datasets with:
 
     python3 python/evaluation.py --model_path=MODEL_PATH --data_path=DATA_PATH
 
-where `MODEL_PATH` is the path to a .h5 model file, and  `DATA_PATH` is a path to a directory containing the test set. In the test set, there should be one sub-directory for each class containing all the images of this class. See wikipaintings_small/wikipaintings_test. 
+where `MODEL_PATH` is the path to a .h5 model file, and  `DATA_PATH` is a path to a directory containing the test set. In the test set, there should be one sub-directory for each class containing all the images of this class. See `wikipaintings_small/wikipaintings_test` for an example. 
 
 
-See `python3 python/evaluation.py -h` for more details 
+See `python3 python/evaluation.py -h` for more details about the options.
 
-Note: At the moment --isdecaf is necessary if you want to evaluate models based on decaf. Hopefully, this will be fixed soon. 
+Note: At the moment `--isdecaf` is necessary if you want to evaluate models based on decaf. Hopefully, this will be fixed soon. 
 
 # License
 
