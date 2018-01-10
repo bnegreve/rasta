@@ -18,9 +18,9 @@ from evaluation import get_pred, init
 from datetime import datetime
 import pathlib
 
-PORT = 4000
 
-MODEL_PATH='../savings/best/model.h5'
+PORT = 4444
+MODEL_PATH='models/best_top_3/model.h5'
 IS_DECAF = False
 K = 3
 TIMEOUT=10
