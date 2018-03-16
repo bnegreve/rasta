@@ -31,7 +31,7 @@ If you have access to GPUs  we encourage you to use them, this will speedup both
    If you want to download the full wikipaintings dataset (the one from WikiArt), execute the following commands. Warning: the file is about ~20GiB, we suggest that you first try with the small datasets provided in `data/wikipaintaings_small`.
 
     cd data
-    wget www.lamsade.dauphine.fr/~bnegrevergne/webpage/software/rasta/wikipaintaings_full.tgz
+    wget www.lamsade.dauphine.fr/~bnegrevergne/webpage/software/rasta/wikipaintings_full.tgz
     tar xzvf wikipaintings_full.tgz
     cd ../
 
